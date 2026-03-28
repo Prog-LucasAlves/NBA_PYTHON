@@ -16,6 +16,29 @@ from nba_prediction_model import NBAPointsPredictor
 
 warnings.filterwarnings("ignore")
 
+
+def check_player_injury_status(player_name: str) -> dict:
+    """Verifica se o jogador tem lesão registrada"""
+    try:
+        if not os.path.exists("nba_players_status.csv"):
+            return {"status": "Disponível", "lesão": "", "aviso": False}
+
+        df_status = pd.read_csv("nba_players_status.csv")
+        player_data = df_status[df_status["Nome"].str.contains(player_name, case=False, na=False)]
+
+        if len(player_data) == 0:
+            return {"status": "Disponível", "lesão": "", "aviso": False}
+
+        player_info = player_data.iloc[0]
+        status = str(player_info.get("Status", "Disponível")).strip()
+        lesao = str(player_info.get("Lesão", "")).strip()
+
+        return {"status": status, "lesão": lesao, "aviso": status.lower() == "indisponível"}
+    except Exception as e:
+        print(f"Aviso: Erro ao verificar lesões: {e}")
+        return {"status": "Disponível", "lesão": "", "aviso": False}
+
+
 # ============================================================================
 # CONFIGURAÇÃO DE PÁGINA E ESTILO
 # ============================================================================
@@ -92,15 +115,41 @@ def load_bets_csv():
                 "Tipo",
                 "Resultado",
                 "Lucro/Prejuízo",
+                "Deletar",
             ]
             for column in expected_columns:
                 if column not in bets_df.columns:
-                    bets_df[column] = "-" if column in {"Resultado", "Lucro/Prejuízo"} else ""
+                    if column == "Deletar":
+                        bets_df[column] = False
+                    else:
+                        bets_df[column] = "-" if column in {"Resultado", "Lucro/Prejuízo"} else ""
+
+            # Normalizar formatação de EV+% e Vitória% para 2 casas decimais
+            for col in ["EV+%", "Vitória%", "Odd"]:
+                if col in bets_df.columns:
+                    try:
+                        bets_df[col] = pd.to_numeric(bets_df[col].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce")
+                        bets_df[col] = bets_df[col].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
+                    except Exception:
+                        pass
 
             return bets_df[expected_columns]
         except Exception:
             return pd.DataFrame()
     return pd.DataFrame()
+
+
+def format_bets_df(df):
+    """Formata colunas de porcentagem e odds com 2 casas decimais"""
+    df_formatted = df.copy()
+    for col in ["EV+%", "Vitória%", "Odd"]:
+        if col in df_formatted.columns:
+            try:
+                numeric_vals = pd.to_numeric(df_formatted[col].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce")
+                df_formatted[col] = numeric_vals.apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
+            except Exception:
+                pass
+    return df_formatted
 
 
 def calculate_profit_loss(result, bet_amount, odds):
@@ -135,9 +184,11 @@ def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_p
         "Tipo": bet_type,
         "Resultado": "-",
         "Lucro/Prejuízo": "-",
+        "Deletar": False,
     }
 
     bets_df = pd.concat([bets_df, pd.DataFrame([new_bet])], ignore_index=True)
+    bets_df = format_bets_df(bets_df)
     bets_df.to_csv(bets_file, index=False, encoding="utf-8")
 
     return len(bets_df)
@@ -179,6 +230,15 @@ st.sidebar.subheader("Seleção de Jogador")
 all_players = sorted(predictor.player_averages.keys())
 selected_player = st.sidebar.selectbox("Selecionar Jogador", options=all_players, help="Escolha um jogador da NBA para analisar")
 
+# ✅ VERIFICAR LESÕES
+injury_check = check_player_injury_status(selected_player)
+if injury_check["aviso"]:
+    st.sidebar.error(f"⚠️ **{selected_player} INDISPONÍVEL**\n\n{injury_check['lesão']}")
+elif injury_check["status"].lower() != "disponível":
+    st.sidebar.warning(f"⚠️ {selected_player}: {injury_check['status']}")
+else:
+    st.sidebar.success(f"✅ {selected_player} - Disponível")
+
 # Parâmetros de apostas
 st.sidebar.subheader("Parâmetros de Apostas")
 col1, col2 = st.sidebar.columns(2)
@@ -215,6 +275,21 @@ tab_predictor, tab_bets = st.tabs(["Preditor de Apostas", "Historico de Apostas"
 # ============================================================================
 
 with tab_predictor:
+    # ✅ AVISO DE LESÃO NA SEÇÃO DE PREVISÃO
+    injury_check = check_player_injury_status(selected_player)
+
+    if injury_check["aviso"]:
+        st.error(f"""
+        ### ⚠️ JOGADOR INDISPONÍVEL
+
+        **{selected_player}** está fora de ação por:
+
+        **{injury_check["lesão"]}**
+
+        ❌ **Não é possível fazer previsão para este jogador no momento.**
+        """)
+        st.stop()
+
     # Obter previsão
     prediction = predictor.predict_points(selected_player, minutes=expected_minutes)
 
@@ -457,6 +532,13 @@ with tab_bets:
                     "Lucro/Prejuízo",
                     disabled=True,
                 ),
+                "Odd": st.column_config.NumberColumn(
+                    "Odd",
+                    format="%.2f",
+                ),
+                "Deletar": st.column_config.CheckboxColumn(
+                    "Deletar",
+                ),
             },
             disabled=["Data", "Jogador", "Time", "Linha", "Odd", "EV+%", "Vitória%", "Valor Aposta", "Tipo", "Lucro/Prejuízo"],
             key="bets_history_editor",
@@ -470,7 +552,14 @@ with tab_bets:
         edited_bets_df["Resultado"] = editable_result
         edited_bets_df["Lucro/Prejuízo"] = calculated_profit_loss
 
+        # Filtrar linhas marcadas para deletar
+        rows_to_delete = edited_bets_df[edited_bets_df["Deletar"]].index
+        if len(rows_to_delete) > 0:
+            edited_bets_df = edited_bets_df.drop(rows_to_delete).reset_index(drop=True)
+            st.warning(f"🗑️ {len(rows_to_delete)} aposta(s) removida(s)")
+
         if not edited_bets_df.equals(bets_df):
+            edited_bets_df = format_bets_df(edited_bets_df)
             edited_bets_df.to_csv("historico_apostas.csv", index=False, encoding="utf-8")
             bets_df = edited_bets_df
             st.rerun()
