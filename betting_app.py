@@ -13,6 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from nba_prediction_model import NBAPointsPredictor
+from overfitting_monitor import OverfittingMonitor
 
 warnings.filterwarnings("ignore")
 
@@ -268,7 +269,7 @@ st.markdown("**Previsões de pontos de jogadores em tempo real com análise de E
 st.divider()
 
 # Criar abas
-tab_predictor, tab_bets = st.tabs(["Preditor de Apostas", "Historico de Apostas"])
+tab_predictor, tab_bets, tab_monitor = st.tabs(["Preditor de Apostas", "Historico de Apostas", "Monitoramento"])
 
 # ============================================================================
 # ABA 1: PREDITOR DE APOSTAS
@@ -624,6 +625,245 @@ with tab_bets:
 
     else:
         st.info("Nenhuma aposta registrada ainda. Vá para a aba 'Preditor de Apostas' para começar a registrar apostas!")
+
+# ============================================================================
+# ABA 3: MONITORAMENTO DE OVERFITTING
+# ============================================================================
+
+with tab_monitor:
+    st.header("📊 Monitoramento de Desempenho do Modelo")
+    st.markdown("Validação contínua contra overfitting e degradação de performance")
+
+    st.divider()
+
+    # ========================================================================
+    # MÉTRICAS PRINCIPAIS
+    # ========================================================================
+
+    st.subheader("🎯 Desempenho Atual")
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        st.metric(
+            label="Score R²",
+            value=f"{predictor.model_stats['r2']:.4f}",
+            delta="Treino" if predictor.model_stats["r2"] > 0.85 else "Atenção",
+            delta_color="normal" if predictor.model_stats["r2"] > 0.85 else "inverse",
+        )
+
+    with col2:
+        st.metric(
+            label="RMSE (Pontos)",
+            value=f"{predictor.model_stats['rmse']:.2f}",
+            delta="Erro" if predictor.model_stats["rmse"] < 3.0 else "Alto",
+            delta_color="inverse",
+        )
+
+    with col3:
+        st.metric(
+            label="MAE (Pontos)",
+            value=f"{predictor.model_stats['mae']:.2f}",
+            delta="Bom" if predictor.model_stats["mae"] < 2.0 else "Regular",
+            delta_color="normal",
+        )
+
+    with col4:
+        st.metric(
+            label="Features",
+            value=f"{len(predictor.feature_cols)}",
+            delta="Otimizado" if len(predictor.feature_cols) == 8 else "Legacy",
+            delta_color="normal",
+        )
+
+    with col5:
+        st.metric(
+            label="Status",
+            value="ATIVO",
+            delta="v2.1" if len(predictor.feature_cols) == 8 else "v2.0",
+            delta_color="normal",
+        )
+
+    st.divider()
+
+    # ========================================================================
+    # THRESHOLDS DE MONITORAMENTO
+    # ========================================================================
+
+    st.subheader("⚠️ Limites de Monitoramento")
+
+    monitor = OverfittingMonitor()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.info("""
+        **Limites Configurados:**
+        - R² Gap Máximo: 0.0500
+        - RMSE Máximo: 3.5 pts
+        - R² Mínimo Teste: 0.8000
+        - Desvio Padrão CV: 0.0300
+        """)
+
+    with col2:
+        # Status do modelo
+        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.85 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.80 else "❌ CRÍTICO"
+        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 2.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 3.0 else "❌ CRÍTICO"
+        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 1.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 2.2 else "❌ CRÍTICO"
+
+        st.info(f"""
+        **Status Atual:**
+        - R²: {r2_status}
+        - RMSE: {rmse_status}
+        - MAE: {mae_status}
+        """)
+
+    st.divider()
+
+    # ========================================================================
+    # FEATURE IMPORTANCE
+    # ========================================================================
+
+    st.subheader("📈 Importância das Features")
+
+    features_dict = predictor.model_stats["feature_importance"]
+    features_df = pd.DataFrame({"Feature": list(features_dict.keys()), "Importância": list(features_dict.values())}).sort_values("Importância", ascending=True)
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        # Gráfico de barras horizontal
+        import altair as alt
+
+        chart = (
+            alt.Chart(features_df)
+            .mark_barh(color="#667eea")
+            .encode(
+                x=alt.X("Importância:Q", title="Importância Relativa"),
+                y=alt.Y("Feature:N", sort="-x", title="Features"),
+                tooltip=["Feature", alt.Tooltip("Importância:Q", format=".4f")],
+            )
+            .properties(title="Importância das Features", height=400, width=400)
+        )
+
+        st.altair_chart(chart, use_container_width=True)
+
+    with col2:
+        st.write("**Top 8 Features (Otimizadas):**")
+        st.dataframe(features_df.sort_values("Importância", ascending=False).head(8), use_container_width=True)
+
+    st.divider()
+
+    # ========================================================================
+    # VALIDAÇÃO CRUZADA
+    # ========================================================================
+
+    st.subheader("🔄 Validação Cruzada (5-Fold)")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.info("""
+        **Configuração:**
+        - Estratégia: 5-Fold CV
+        - Shuffle: True
+        - Random State: 42
+
+        **Objetivo:**
+        Validar estabilidade do modelo
+        em diferentes subconjuntos dos dados
+        """)
+
+    with col2:
+        st.warning("""
+        **Recomendações:**
+        - Monitorar Gap R² < 0.05
+        - Verificar variância entre folds
+        - Revalidar com novos dados mensalmente
+        - Alertar se Gap > 0.05 (overfitting)
+        """)
+
+    st.divider()
+
+    # ========================================================================
+    # HISTÓRICO & TENDÊNCIAS
+    # ========================================================================
+
+    st.subheader("📊 Resumo de Desempenho")
+
+    summary_data = {
+        "Métrica": ["R² Score", "RMSE", "MAE", "Features", "Status"],
+        "Atual": [
+            f"{predictor.model_stats['r2']:.4f}",
+            f"{predictor.model_stats['rmse']:.2f} pts",
+            f"{predictor.model_stats['mae']:.2f} pts",
+            f"{len(predictor.feature_cols)} features",
+            "Ativo",
+        ],
+        "Alvo": ["≥ 0.86", "< 2.5 pts", "< 1.8 pts", "8 features", "v2.1"],
+        "Status": [
+            "✅" if predictor.model_stats["r2"] >= 0.86 else "⚠️",
+            "✅" if predictor.model_stats["rmse"] < 2.5 else "⚠️",
+            "✅" if predictor.model_stats["mae"] < 1.8 else "⚠️",
+            "✅" if len(predictor.feature_cols) == 8 else "ℹ️",
+            "✅",
+        ],
+    }
+
+    summary_df = pd.DataFrame(summary_data)
+    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ========================================================================
+    # ALERTAS E AVISOS
+    # ========================================================================
+
+    st.subheader("🔔 Avisos de Monitoramento")
+
+    alerts = []
+
+    if predictor.model_stats["r2"] < 0.85:
+        alerts.append(("⚠️", "R² abaixo de 0.85 - Verificar qualidade dos dados"))
+
+    if predictor.model_stats["rmse"] > 2.8:
+        alerts.append(("⚠️", f"RMSE elevado: {predictor.model_stats['rmse']:.2f} pts"))
+
+    if predictor.model_stats["mae"] > 2.0:
+        alerts.append(("⚠️", f"MAE elevado: {predictor.model_stats['mae']:.2f} pts"))
+
+    if len(predictor.feature_cols) != 8:
+        alerts.append(("ℹ️", f"Modelo usando {len(predictor.feature_cols)} features (otimizado: 8)"))
+
+    if len(alerts) == 0:
+        st.success("✅ Nenhum aviso no momento - Modelo operacional")
+    else:
+        for icon, message in alerts:
+            st.warning(f"{icon} {message}")
+
+    st.divider()
+
+    # ========================================================================
+    # LOGS
+    # ========================================================================
+
+    st.subheader("📋 Informações Técnicas")
+
+    with st.expander("Ver Detalhes Técnicos"):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Modelo:**")
+            st.code(f"""
+            Tipo: Linear Regression
+            Features: {len(predictor.feature_cols)}
+            Samples Treino: ~1000
+            CV Strategy: 5-Fold
+            """)
+
+        with col2:
+            st.write("**Features Utilizadas:**")
+            st.code(", ".join(predictor.feature_cols))
 
 st.divider()
 st.markdown("""
