@@ -351,12 +351,12 @@ class GameStatsProcessor:
         print("\n" + "=" * 70)
 
 
-def main():
+def main() -> None:
     """Exemplo de uso do processador."""
     processor = GameStatsProcessor()
 
-    # 1. Coletar dados
-    raw_df = processor.collect_game_stats(season=2024, max_games=100)
+    # 1. Coletar dados da temporada 2025-2026 (atual)
+    raw_df = processor.collect_game_stats(season=2025, max_games=100)
 
     if raw_df.empty:
         print("⚠️ Nenhum dado coletado")

@@ -411,12 +411,12 @@ def main() -> None:
     """Exemplo de uso do scraper."""
     scraper = NBAGameStatsScraper()
 
-    # Coletar dados da temporada 2024
-    df = scraper.scrape_game_stats(season=2024, max_games=100)
+    # Coletar dados da temporada 2025-2026 (atual)
+    df = scraper.scrape_game_stats(season=2025, max_games=100)
 
     if not df.empty:
         # Salvar em CSV
-        scraper.save_to_csv(df, "nba_game_stats_2024.csv")
+        scraper.save_to_csv(df, "nba_game_stats_2025.csv")
 
         # Gerar relatório
         scraper.generate_report(df)
