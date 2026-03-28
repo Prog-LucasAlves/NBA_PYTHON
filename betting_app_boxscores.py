@@ -958,7 +958,8 @@ with tab_monitor:
         bets_with_real_filled["predicted"] = pd.to_numeric(bets_with_real_filled["Linha"].astype(str).str.replace(",", "."), errors="coerce")
         bets_with_real_filled["error"] = (bets_with_real_filled["actual"] - bets_with_real_filled["predicted"]).abs()
         bets_with_real_filled["confidence"] = 0.85
-        bets_with_real_filled["is_accurate"] = bets_with_real_filled["error"] < 1.5
+        # ✅ Usar Resultado da aposta (Green=acertou, Red=errou) ao invés de threshold de 1.5 pts
+        bets_with_real_filled["is_accurate"] = bets_with_real_filled["Resultado"].str.lower() == "green"
 
         display_df = bets_with_real_filled[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(15).copy()
         display_df.columns = [
