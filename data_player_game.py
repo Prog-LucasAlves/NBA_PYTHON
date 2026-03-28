@@ -20,14 +20,23 @@ from typing import Dict, Optional
 import numpy as np
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 STATS_API_BASE = "https://stats.nba.com/stats"
+
+# User-Agents para rotation
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+]
+
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
@@ -46,10 +55,23 @@ class PlayerGameDataCollector:
             cache_dir: Diretório para cache de dados
         """
         self.session = requests.Session()
+
+        # Configura retry strategy com backoff exponencial
+        retry_strategy = Retry(
+            total=3,  # Total de tentativas
+            status_forcelist=[429, 500, 502, 503, 504],  # Status codes para retry
+            allowed_methods=["GET", "HEAD"],
+            backoff_factor=1.5,  # Espera 1.5, 3, 4.5 segundos entre tentativas
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
         self.session.headers.update(HEADERS)
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
-        self.rate_limit_delay = 0.6  # Delay entre requisições
+        self.rate_limit_delay = 1.5  # Delay entre requisições (aumentado)
+        self.user_agent_index = 0  # Para rotation de User-Agent
 
     def _get_cache_path(self, endpoint: str, params: Dict) -> str:
         """Gera caminho de cache para uma requisição."""
@@ -77,7 +99,7 @@ class PlayerGameDataCollector:
 
     def _make_request(self, endpoint: str, params: Dict, use_cache: bool = True) -> Optional[Dict]:
         """
-        Faz requisição à API com cache e rate limiting.
+        Faz requisição à API com cache, retry e rate limiting.
 
         Args:
             endpoint: Nome do endpoint (ex: 'leaguegamefinder')
@@ -100,7 +122,13 @@ class PlayerGameDataCollector:
             url = f"{STATS_API_BASE}/{endpoint}"
             logger.debug(f"📡 Requisitando {endpoint} com params: {params}")
 
-            response = self.session.get(url, params=params, timeout=15)
+            # Rotaciona User-Agent
+            headers = HEADERS.copy()
+            headers["User-Agent"] = USER_AGENTS[self.user_agent_index % len(USER_AGENTS)]
+            self.user_agent_index += 1
+
+            # Timeout aumentado para 30s (API pode ser lenta)
+            response = self.session.get(url, params=params, headers=headers, timeout=30)
             response.raise_for_status()
 
             data = response.json()
@@ -114,7 +142,7 @@ class PlayerGameDataCollector:
             return data
 
         except requests.exceptions.Timeout:
-            logger.error(f"❌ Timeout na requisição a {endpoint}")
+            logger.error(f"❌ Timeout na requisição a {endpoint} (30s)")
             return None
         except requests.exceptions.HTTPError as e:
             logger.error(f"❌ Erro HTTP ({e.response.status_code}): {endpoint}")
