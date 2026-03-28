@@ -115,6 +115,7 @@ def load_bets_csv():
                 "Time",
                 "Linha",
                 "Odd",
+                "Pts(Real)",
                 "EV+%",
                 "Vitória%",
                 "Valor Aposta",
@@ -184,6 +185,7 @@ def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_p
         "Time": team_name,
         "Linha": f"{market_line:.1f}",
         "Odd": f"{odds:.2f}",
+        "Pts(Real)": "",
         "EV+%": f"{ev_plus_pct:.2f}",
         "Vitória%": f"{model_win_pct:.2f}",
         "Valor Aposta": f"R$ {bet_amount:.2f}",
@@ -698,6 +700,33 @@ with tab_bets:
             st.warning(f"🗑️ {len(rows_to_delete)} aposta(s) removida(s)")
 
         if not edited_bets_df.equals(bets_df):
+            # ✅ Registrar Pts(Real) preenchidos no monitor automático
+            auto_monitor = AutomaticModelMonitor()
+
+            # Detectar quais linhas foram atualizadas com Pts(Real)
+            for idx, row in edited_bets_df.iterrows():
+                original_row = bets_df.iloc[idx] if idx < len(bets_df) else None
+
+                # Se Pts(Real) foi preenchido (e não estava antes)
+                if original_row is not None and str(row["Pts(Real)"]).strip() != "" and str(original_row["Pts(Real)"]).strip() == "":
+                    try:
+                        pts_real = float(str(row["Pts(Real)"]).replace(",", "."))
+                        predicted_pts = float(str(row["Linha"]).replace(",", "."))  # Linha é o valor predito
+                        player_name = str(row["Jogador"])
+                        ev_plus = float(str(row["EV+%"]).replace("%", "").replace(",", "."))
+
+                        # Registrar no monitor
+                        auto_monitor.log_prediction(
+                            player_name=player_name,
+                            actual_pts=pts_real,
+                            predicted_pts=predicted_pts,
+                            confidence=0.85,  # Confiança padrão
+                        )
+
+                        st.success(f"✅ Predição registrada: {player_name} | Real: {pts_real:.1f} pts")
+                    except Exception as e:
+                        st.warning(f"Erro ao registrar predição: {e}")
+
             edited_bets_df = format_bets_df(edited_bets_df)
             edited_bets_df.to_csv("historico_apostas.csv", index=False, encoding="utf-8")
             bets_df = edited_bets_df
@@ -914,10 +943,33 @@ with tab_monitor:
 
     # Predições recentes
     st.subheader("📋 Últimas Predições Registradas")
-    recent_df = auto_monitor.get_recent_predictions(10)
-    if not recent_df.empty:
-        display_df = recent_df[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].copy()
-        display_df.columns = ["Data", "Jogador", "Real (pts)", "Previsto (pts)", "Erro (pts)", "Confiança", "Acertou"]
+
+    # Usar PRIMARIAMENTE o histórico de apostas com Pts(Real) preenchido
+    bets_with_real = load_bets_csv()
+
+    # ✅ Filtro correto: verificar se NÃO é NaN e NÃO é string vazia
+    bets_with_real_filled = bets_with_real[(bets_with_real["Pts(Real)"].notna()) & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "") & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "-")].copy()
+
+    if len(bets_with_real_filled) > 0:
+        # Converter para formato compatível com display
+        bets_with_real_filled["timestamp"] = pd.to_datetime(bets_with_real_filled["Data"])
+        bets_with_real_filled["player"] = bets_with_real_filled["Jogador"]
+        bets_with_real_filled["actual"] = pd.to_numeric(bets_with_real_filled["Pts(Real)"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_with_real_filled["predicted"] = pd.to_numeric(bets_with_real_filled["Linha"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_with_real_filled["error"] = (bets_with_real_filled["actual"] - bets_with_real_filled["predicted"]).abs()
+        bets_with_real_filled["confidence"] = 0.85
+        bets_with_real_filled["is_accurate"] = bets_with_real_filled["error"] < 1.5
+
+        display_df = bets_with_real_filled[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(15).copy()
+        display_df.columns = [
+            "Data",
+            "Jogador",
+            "Real (pts)",
+            "Previsto (pts)",
+            "Erro (pts)",
+            "Confiança",
+            "Acertou",
+        ]
         display_df["Data"] = pd.to_datetime(display_df["Data"]).dt.strftime("%d/%m %H:%M")
         display_df["Real (pts)"] = display_df["Real (pts)"].round(2)
         display_df["Previsto (pts)"] = display_df["Previsto (pts)"].round(2)
@@ -926,8 +978,10 @@ with tab_monitor:
         display_df["Acertou"] = display_df["Acertou"].map({True: "✅", False: "❌"})
 
         st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+        st.success(f"✅ Mostrando **{len(display_df)}** predição(ões) com Pts(Real) registrado(s). Continue preenchendo Pts(Real) para suas apostas!")
     else:
-        st.info("Nenhuma predição registrada ainda. Faça uma previsão e registre uma aposta para começar o monitoramento.")
+        st.info("📝 Nenhuma predição com Pts(Real) preenchido ainda. \n\n**Como usar:**\n1. Faça uma previsão e registre uma aposta\n2. Ao final do jogo, preencha coluna 'Pts(Real)' no histórico de apostas\n3. A predição aparecerá aqui automaticamente")
 
     # Estatísticas diárias
     st.subheader("📊 Desempenho Diário (Últimos 7 dias)")
