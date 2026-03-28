@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-03-28T20:11:06.389441",
+    "player": "LeBron James",
+    "actual": 32.5,
+    "predicted": 31.2,
+    "error": 1.3000000000000007,
+    "confidence": 0.92,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-28T20:11:06.390440",
+    "player": "Luka Doncic",
+    "actual": 28.3,
+    "predicted": 30.1,
+    "error": 1.8000000000000007,
+    "confidence": 0.88,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-28T20:11:06.392196",
+    "player": "Giannis Antetokounmpo",
+    "actual": 26.1,
+    "predicted": 22.5,
+    "error": 3.6000000000000014,
+    "confidence": 0.85,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-28T20:11:06.393246",
+    "player": "Kevin Durant",
+    "actual": 25.7,
+    "predicted": 26.3,
+    "error": 0.6000000000000014,
+    "confidence": 0.9,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-28T20:11:06.394318",
+    "player": "Stephen Curry",
+    "actual": 24.5,
+    "predicted": 28.2,
+    "error": 3.6999999999999993,
+    "confidence": 0.87,
+    "is_accurate": false
+  }
+]

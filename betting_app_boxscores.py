@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from automatic_model_monitor import AutomaticModelMonitor
 from nba_injury_scraper import NBAInjuryScraper
 from nba_prediction_model_boxscores import NBAPointsPredictorBoxscores
 from overfitting_monitor import OverfittingMonitor
@@ -511,8 +512,28 @@ with tab_predictor:
         bet_button = st.button("REGISTRAR APOSTA", key="bet_button_boxscores", use_container_width=True)
 
     if bet_button:
+        # Inicializar monitor automático
+        auto_monitor = AutomaticModelMonitor()
+
         # Salvar aposta
-        num_bets = save_bet(player_name=selected_player, team_name=predictor.player_averages[selected_player]["team"], market_line=market_line, odds=market_odds, ev_plus_pct=ev_analysis["ev_plus_pct"], model_win_pct=ev_analysis["model_probability"] * 100, bet_amount=bet_amount, bet_type=bet_type)
+        num_bets = save_bet(
+            player_name=selected_player,
+            team_name=predictor.player_averages[selected_player]["team"],
+            market_line=market_line,
+            odds=market_odds,
+            ev_plus_pct=ev_analysis["ev_plus_pct"],
+            model_win_pct=ev_analysis["model_probability"] * 100,
+            bet_amount=bet_amount,
+            bet_type=bet_type,
+        )
+
+        # Registrar no monitoramento automático
+        auto_monitor.log_prediction(
+            player_name=selected_player,
+            predicted_pts=prediction["predicted_points"],
+            actual_pts=predictor.player_averages[selected_player]["avg_pts"],  # Usa média histórica como referência
+            confidence=ev_analysis["model_probability"],
+        )
 
         st.success(f"Aposta registrada com sucesso! Total de apostas: {num_bets}")
         st.balloons()
@@ -836,7 +857,98 @@ with tab_monitor:
 
     st.divider()
 
-    # FEATURE IMPORTANCE
+    # ========================================================================
+    # MONITORAMENTO AUTOMÁTICO EM TEMPO REAL
+    # ========================================================================
+
+    st.subheader("🤖 Monitoramento Automático em Tempo Real")
+
+    auto_monitor = AutomaticModelMonitor()
+    auto_metrics = auto_monitor.get_current_metrics()
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            label="Predições Registradas",
+            value=auto_metrics["total_predictions"],
+            delta="Histórico",
+            delta_color="normal",
+        )
+
+    with col2:
+        mae_value = auto_metrics["mae"]
+        st.metric(
+            label="MAE Automático",
+            value=f"{mae_value:.2f} pts",
+            delta="Acurácia em produção" if isinstance(mae_value, (int, float)) and mae_value > 0 else "Sem dados",
+            delta_color="inverse",
+        )
+
+    with col3:
+        st.metric(
+            label="Acurácia",
+            value=f"{auto_metrics['accuracy_percent']:.1f}%",
+            delta="Taxa de acerto",
+            delta_color="normal",
+        )
+
+    with col4:
+        status_str = str(auto_metrics["status"])
+        status_emoji = "✅" if status_str == "✅ SAUDÁVEL" else "⚠️" if "AVISO" in status_str else "❌"
+        st.metric(
+            label="Status",
+            value=status_emoji,
+            delta=status_str,
+            delta_color="normal",
+        )
+
+    st.divider()
+
+    # Análise de degradação
+    degradation = auto_monitor.get_degradation_analysis()
+    if degradation["has_degradation"]:
+        st.warning(f"⚠️ **DEGRADAÇÃO DETECTADA**: {degradation.get('message', 'Consulte detalhes abaixo')}")
+    else:
+        st.success(f"✅ Modelo estável: {degradation.get('message', 'Sem sinais de degradação')}")
+
+    # Predições recentes
+    st.subheader("📋 Últimas Predições Registradas")
+    recent_df = auto_monitor.get_recent_predictions(10)
+    if not recent_df.empty:
+        display_df = recent_df[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].copy()
+        display_df.columns = ["Data", "Jogador", "Real (pts)", "Previsto (pts)", "Erro (pts)", "Confiança", "Acertou"]
+        display_df["Data"] = pd.to_datetime(display_df["Data"]).dt.strftime("%d/%m %H:%M")
+        display_df["Real (pts)"] = display_df["Real (pts)"].round(2)
+        display_df["Previsto (pts)"] = display_df["Previsto (pts)"].round(2)
+        display_df["Erro (pts)"] = display_df["Erro (pts)"].round(2)
+        display_df["Confiança"] = (display_df["Confiança"] * 100).round(0).astype(int).astype(str) + "%"
+        display_df["Acertou"] = display_df["Acertou"].map({True: "✅", False: "❌"})
+
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("Nenhuma predição registrada ainda. Faça uma previsão e registre uma aposta para começar o monitoramento.")
+
+    # Estatísticas diárias
+    st.subheader("📊 Desempenho Diário (Últimos 7 dias)")
+    daily_stats = auto_monitor.get_daily_stats(7)
+    if not daily_stats.empty:
+        st.dataframe(daily_stats, use_container_width=True, hide_index=True)
+
+        # Gráfico de acurácia diária
+        chart = (
+            alt.Chart(daily_stats)
+            .mark_area(opacity=0.3, line=True)
+            .encode(
+                x=alt.X("date:T", title="Data"),
+                y=alt.Y("ACCURACY:Q", title="Acurácia (%)", scale=alt.Scale(domain=[0, 100])),
+                tooltip=["date", "ACCURACY", "PREDICTIONS"],
+            )
+            .properties(title="Tendência de Acurácia", height=300)
+        )
+        st.altair_chart(chart, use_container_width=True)
+
+    st.divider()
     st.subheader("📈 Importância das Features")
 
     features_dict = predictor.model_stats.get("feature_importance", {})
