@@ -737,10 +737,10 @@ with tab_monitor:
 
         chart = (
             alt.Chart(features_df)
-            .mark_barh(color="#667eea")
+            .mark_bar(color="#667eea")
             .encode(
-                x=alt.X("Importância:Q", title="Importância Relativa"),
                 y=alt.Y("Feature:N", sort="-x", title="Features"),
+                x=alt.X("Importância:Q", title="Importância Relativa"),
                 tooltip=["Feature", alt.Tooltip("Importância:Q", format=".4f")],
             )
             .properties(title="Importância das Features", height=400, width=400)
