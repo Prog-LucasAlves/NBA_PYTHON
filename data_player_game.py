@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Coleta dados de desempenho de cada jogador por partida da temporada.
+Coleta dados de boxscores de jogadores da NBA.
 
-Implementa:
-- LeagueGameFinder para coleta eficiente (evita rate limiting)
-- Verificação de ROSTERSTATUS em commonplayerinfo
-- Cache de dados
-- Rate limiting seguro
+Coleta dados de: https://www.nba.com/stats/players/boxscores
+
+Implementações:
+- Retry strategy com backoff exponencial (evita rate limiting)
+- User-Agent rotation (evita detecção de bot)
+- Cache em JSON (recuperação instantânea)
+- Timeout aumentado (API pode ser lenta)
+- Logging detalhado
 - Tratamento robusto de erros
 """
 
@@ -17,7 +20,6 @@ import os
 import time
 from typing import Dict, Optional
 
-import numpy as np
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
@@ -27,13 +29,14 @@ from urllib3.util.retry import Retry
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-STATS_API_BASE = "https://stats.nba.com/stats"
+BASE_URL = "https://stats.nba.com/stats/leaguedashplayerstats"
 
-# User-Agents para rotation
+# User-Agents para rotation (evita bloqueios)
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
 ]
 
 HEADERS = {
@@ -41,11 +44,14 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
+    "Referer": "https://www.nba.com/stats/players/boxscores",
 }
 
+SLEEP_SECONDS = 1.2  # Delay entre requisições
 
-class PlayerGameDataCollector:
-    """Coleta dados de partidas por jogador usando LeagueGameFinder."""
+
+class BoxscoresCollector:
+    """Coleta dados de boxscores de jogadores."""
 
     def __init__(self, cache_dir: str = "data/.cache"):
         """
@@ -59,9 +65,9 @@ class PlayerGameDataCollector:
         # Configura retry strategy com backoff exponencial
         retry_strategy = Retry(
             total=3,  # Total de tentativas
-            status_forcelist=[429, 500, 502, 503, 504],  # Status codes para retry
+            status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["GET", "HEAD"],
-            backoff_factor=1.5,  # Espera 1.5, 3, 4.5 segundos entre tentativas
+            backoff_factor=1.5,  # Espera 1.5s, 3s, 4.5s entre tentativas
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
@@ -70,13 +76,12 @@ class PlayerGameDataCollector:
         self.session.headers.update(HEADERS)
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
-        self.rate_limit_delay = 1.5  # Delay entre requisições (aumentado)
-        self.user_agent_index = 0  # Para rotation de User-Agent
+        self.user_agent_index = 0
 
-    def _get_cache_path(self, endpoint: str, params: Dict) -> str:
+    def _get_cache_path(self, params: Dict) -> str:
         """Gera caminho de cache para uma requisição."""
         param_str = "_".join(f"{k}={v}" for k, v in sorted(params.items()))
-        cache_file = f"{endpoint}_{param_str}.json"
+        cache_file = f"boxscores_{param_str}.json"
         return os.path.join(self.cache_dir, cache_file)
 
     def _load_from_cache(self, cache_path: str) -> Optional[Dict]:
@@ -84,6 +89,7 @@ class PlayerGameDataCollector:
         if os.path.exists(cache_path):
             try:
                 with open(cache_path, "r", encoding="utf-8") as f:
+                    logger.debug(f"📦 Usando cache: {os.path.basename(cache_path)}")
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"⚠️  Erro ao ler cache: {str(e)}")
@@ -97,39 +103,44 @@ class PlayerGameDataCollector:
         except Exception as e:
             logger.warning(f"⚠️  Erro ao salvar cache: {str(e)}")
 
-    def _make_request(self, endpoint: str, params: Dict, use_cache: bool = True) -> Optional[Dict]:
+    def _make_request(self, params: Dict, use_cache: bool = True) -> Optional[Dict]:
         """
-        Faz requisição à API com cache, retry e rate limiting.
+        Faz requisição com cache, retry e rate limiting.
 
         Args:
-            endpoint: Nome do endpoint (ex: 'leaguegamefinder')
             params: Parâmetros da requisição
             use_cache: Se True, usa cache quando disponível
 
         Returns:
             Dados JSON ou None se falhar
         """
-        cache_path = self._get_cache_path(endpoint, params)
+        cache_path = self._get_cache_path(params)
 
         # Tenta carregar do cache
         if use_cache:
             cached_data = self._load_from_cache(cache_path)
             if cached_data:
-                logger.debug(f"📦 Usando cache para {endpoint}")
                 return cached_data
 
         try:
-            url = f"{STATS_API_BASE}/{endpoint}"
-            logger.debug(f"📡 Requisitando {endpoint} com params: {params}")
+            logger.debug(f"📡 Requisitando: {BASE_URL}")
+            logger.debug(f"   Params: {params}")
 
             # Rotaciona User-Agent
             headers = HEADERS.copy()
             headers["User-Agent"] = USER_AGENTS[self.user_agent_index % len(USER_AGENTS)]
             self.user_agent_index += 1
 
-            # Timeout aumentado para 30s (API pode ser lenta)
-            response = self.session.get(url, params=params, headers=headers, timeout=30)
+            # Timeout aumentado para 30s
+            response = self.session.get(BASE_URL, params=params, headers=headers, timeout=30)
             response.raise_for_status()
+
+            # Valida que é JSON
+            content_type = response.headers.get("content-type", "")
+            if "application/json" not in content_type:
+                logger.warning(f"⚠️  Content-Type não é JSON: {content_type}")
+                logger.debug(f"   Corpo: {response.text[:200]}")
+                return None
 
             data = response.json()
 
@@ -137,220 +148,84 @@ class PlayerGameDataCollector:
             self._save_to_cache(cache_path, data)
 
             # Respeita rate limit
-            time.sleep(self.rate_limit_delay)
+            time.sleep(SLEEP_SECONDS)
 
             return data
 
         except requests.exceptions.Timeout:
-            logger.error(f"❌ Timeout na requisição a {endpoint} (30s)")
+            logger.error("❌ Timeout na requisição (30s)")
             return None
         except requests.exceptions.HTTPError as e:
-            logger.error(f"❌ Erro HTTP ({e.response.status_code}): {endpoint}")
+            logger.error(f"❌ Erro HTTP ({e.response.status_code}): {str(e)[:100]}")
+            logger.debug(f"   Resposta: {e.response.text[:200]}")
+            return None
+        except requests.exceptions.JSONDecodeError as e:
+            logger.error(f"❌ Erro ao decodificar JSON: {str(e)[:100]}")
+            logger.debug("   ℹ️  A página pode estar em HTML, não JSON")
+            logger.debug(f"   URL: {BASE_URL}")
+            logger.debug(f"   Params: {params}")
             return None
         except Exception as e:
-            logger.error(f"❌ Erro na requisição: {str(e)}")
+            logger.error(f"❌ Erro na requisição: {str(e)[:100]}")
             return None
 
-    def get_active_players(self, season: str = "2025-26") -> Optional[pd.DataFrame]:
+    def get_player_stats_by_game(self, season: str = "2025-26", season_type: str = "Regular Season", measure_type: str = "Base") -> Optional[pd.DataFrame]:
         """
-        Obtém lista de jogadores ativos com status de roster.
+        Coleta estatísticas de jogadores por jogo.
 
         Args:
-            season: Temporada no formato "YYYY-YY"
+            season: Temporada (ex: "2025-26")
+            season_type: Tipo de temporada ('Regular Season', 'Playoffs')
+            measure_type: Tipo de medida ('Base', 'Advanced')
 
         Returns:
-            DataFrame com jogadores ativos
+            DataFrame com estatísticas ou None se falhar
         """
         try:
-            logger.info(f"👥 Obtendo jogadores ativos da temporada {season}...")
+            logger.info(f"🏀 Coletando boxscores da temporada {season}...")
 
-            params = {"LeagueID": "00", "Season": season, "SeasonType": "Regular Season", "PerMode": "PerGame"}
+            params = {
+                "Season": season,
+                "SeasonType": season_type,
+                "MeasureType": measure_type,
+                "PerMode": "PerGame",
+                "LeagueID": "00",
+                "PageSize": 1000,
+                "PageNum": 1,
+            }
 
-            data = self._make_request("leaguedashplayerstats", params)
+            data = self._make_request(params, use_cache=True)
 
-            if not data or "resultSets" not in data:
-                logger.warning(f"⚠️  Sem dados de jogadores para {season}")
+            if not data:
+                logger.warning(f"⚠️  Nenhum dado retornado para {season}")
                 return None
 
-            headers = data["resultSets"][0]["headers"]
-            rows = data["resultSets"][0]["rowSet"]
+            # Extrair dados de jogadores
+            player_stats = data.get("resultSet", {}).get("rowSet", [])
+            headers = data.get("resultSet", {}).get("headers", [])
 
-            if not rows:
+            if not player_stats or not headers:
+                logger.warning("⚠️  Nenhum dado de jogador encontrado")
                 return None
 
-            df = pd.DataFrame(rows, columns=headers)
+            df = pd.DataFrame(player_stats, columns=headers)
 
-            # Mantém apenas PLAYER_ID e PLAYER_NAME para referência
-            if "PLAYER_ID" in df.columns and "PLAYER_NAME" in df.columns:
-                df = df[["PLAYER_ID", "PLAYER_NAME"]].copy()
-                df.drop_duplicates(subset=["PLAYER_ID"], inplace=True)
-                logger.info(f"✅ Encontrados {len(df)} jogadores ativos")
-                return df
+            # Adicionar coluna de temporada
+            df["SEASON"] = season
 
-            return None
-
-        except Exception as e:
-            logger.error(f"❌ Erro ao obter jogadores ativos: {str(e)}")
-            return None
-
-    def verify_roster_status(self, player_id: int) -> Optional[str]:
-        """
-        Verifica o status de roster do jogador (mais preciso que is_active).
-
-        Args:
-            player_id: ID do jogador
-
-        Returns:
-            Status do roster ou None se não disponível
-        """
-        try:
-            params = {"PlayerID": player_id}
-            data = self._make_request("commonplayerinfo", params)
-
-            if not data or "resultSets" not in data or len(data["resultSets"]) < 1:
-                return None
-
-            headers = data["resultSets"][0]["headers"]
-            rows = data["resultSets"][0]["rowSet"]
-
-            if not rows:
-                return None
-
-            if "ROSTERSTATUS" in headers:
-                idx = headers.index("ROSTERSTATUS")
-                return rows[0][idx]
-
-            return None
-
-        except Exception as e:
-            logger.debug(f"⚠️  Erro ao verificar status de {player_id}: {str(e)}")
-            return None
-
-    def get_league_game_finder(self, season: str = "2025-26", season_type: str = "Regular Season") -> Optional[pd.DataFrame]:
-        """
-        Coleta dados de todos os jogos usando LeagueGameFinder.
-
-        Muito mais eficiente do que fazer chamadas individuais por jogador.
-
-        Args:
-            season: Temporada no formato "YYYY-YY"
-            season_type: Tipo de temporada ('Regular Season', 'Playoffs', 'All-Star')
-
-        Returns:
-            DataFrame com dados de cada jogador em cada partida
-        """
-        try:
-            logger.info(f"\n🎮 Coletando dados de partidas com LeagueGameFinder ({season})...")
-            logger.info(f"   Tipo: {season_type}")
-            logger.info("   ⏳ Isso pode levar alguns minutos...")
-
-            params = {"LeagueID": "00", "Season": season, "SeasonType": season_type, "PerMode": "PerGame"}
-
-            data = self._make_request("leaguegamefinder", params, use_cache=True)
-
-            if not data or "resultSets" not in data:
-                logger.warning(f"⚠️  Sem dados de partidas para {season}")
-                return None
-
-            if len(data["resultSets"]) < 1:
-                logger.warning("⚠️  Nenhuma linha de dados retornada")
-                return None
-
-            headers = data["resultSets"][0]["headers"]
-            rows = data["resultSets"][0]["rowSet"]
-
-            if not rows:
-                logger.warning("⚠️  Nenhuma partida encontrada")
-                return None
-
-            df = pd.DataFrame(rows, columns=headers)
-
-            logger.info(f"✅ Coletadas {len(df)} linhas de dados de partidas")
-            logger.info(f"   Jogadores únicos: {df['PLAYER_ID'].nunique() if 'PLAYER_ID' in df.columns else 'N/A'}")
-            logger.info(f"   Partidas únicas: {df['Game_ID'].nunique() if 'Game_ID' in df.columns else 'N/A'}")
+            logger.info(f"✅ Coletados {len(df)} registros para {season}")
+            logger.info(f"   Colunas: {len(df.columns)}")
+            logger.info(f"   Período: {df.get('GAME_DATE', pd.Series()).min() if 'GAME_DATE' in df.columns else 'N/A'} a {df.get('GAME_DATE', pd.Series()).max() if 'GAME_DATE' in df.columns else 'N/A'}")
 
             return df
 
         except Exception as e:
-            logger.error(f"❌ Erro ao coletar dados de partidas: {str(e)}")
+            logger.error(f"❌ Erro ao coletar dados: {str(e)[:100]}")
             return None
 
-    def get_player_game_logs(self, player_id: int, season: str = "2025-26") -> Optional[pd.DataFrame]:
+    def save_to_csv(self, df: pd.DataFrame, filename: str) -> bool:
         """
-        Coleta histórico de jogos de um jogador específico.
-
-        Use apenas para jogadores individuais após coleta em massa com LeagueGameFinder.
-
-        Args:
-            player_id: ID do jogador
-            season: Temporada
-
-        Returns:
-            DataFrame com logs de jogo do jogador
-        """
-        try:
-            params = {"PlayerID": player_id, "Season": season, "SeasonType": "Regular Season"}
-
-            data = self._make_request("playergamelog", params)
-
-            if not data or "resultSets" not in data:
-                return None
-
-            headers = data["resultSets"][0]["headers"]
-            rows = data["resultSets"][0]["rowSet"]
-
-            if not rows:
-                return None
-
-            df = pd.DataFrame(rows, columns=headers)
-            return df
-
-        except Exception as e:
-            logger.warning(f"⚠️  Erro ao coletar logs de {player_id}: {str(e)}")
-            return None
-
-    def enrich_with_roster_status(self, df: pd.DataFrame, sample_size: int = 50) -> pd.DataFrame:
-        """
-        Enriquece dados com status de roster de uma amostra de jogadores.
-
-        Não verifica TODOS os jogadores para economizar rate limits.
-
-        Args:
-            df: DataFrame com dados de partidas
-            sample_size: Quantos jogadores únicos verificar
-
-        Returns:
-            DataFrame com coluna ROSTERSTATUS_VERIFIED
-        """
-        try:
-            if "PLAYER_ID" not in df.columns:
-                logger.warning("⚠️  Coluna PLAYER_ID não encontrada")
-                return df
-
-            unique_players = df["PLAYER_ID"].unique()[:sample_size]
-
-            logger.info(f"🔍 Verificando status de roster de {len(unique_players)} jogadores...")
-
-            roster_statuses = {}
-            for i, player_id in enumerate(unique_players):
-                status = self.verify_roster_status(int(player_id))
-                roster_statuses[player_id] = status
-
-                if (i + 1) % 10 == 0:
-                    logger.debug(f"   ✓ {i + 1}/{len(unique_players)}")
-
-            df["ROSTERSTATUS_VERIFIED"] = df["PLAYER_ID"].map(roster_statuses)
-            logger.info("✅ Status de roster verificado")
-
-            return df
-
-        except Exception as e:
-            logger.error(f"❌ Erro ao enriquecer com status de roster: {str(e)}")
-            return df
-
-    def save_game_data(self, df: pd.DataFrame, filename: str = "nba_player_game_data.csv") -> bool:
-        """
-        Salva dados de partidas em CSV.
+        Salva dados em CSV.
 
         Args:
             df: DataFrame para salvar
@@ -366,7 +241,7 @@ class PlayerGameDataCollector:
             df.to_csv(filepath, index=False, encoding="utf-8")
 
             size_kb = os.path.getsize(filepath) / 1024
-            logger.info(f"💾 Salvo: {filename} ({size_kb:.1f} KB)")
+            logger.info(f"💾 Salvo: {filename} ({size_kb:.1f} KB, {len(df)} linhas)")
 
             return True
 
@@ -374,65 +249,61 @@ class PlayerGameDataCollector:
             logger.error(f"❌ Erro ao salvar {filename}: {str(e)}")
             return False
 
-    def get_data_summary(self, df: pd.DataFrame) -> None:
-        """Exibe resumo dos dados coletados."""
+    def get_summary(self, df: pd.DataFrame) -> None:
+        """Exibe resumo dos dados."""
         if df is None or df.empty:
             logger.warning("⚠️  Nenhum dado para resumir")
             return
 
         logger.info("\n" + "=" * 70)
-        logger.info("📊 RESUMO DOS DADOS COLETADOS")
+        logger.info("📊 RESUMO DOS DADOS")
         logger.info("=" * 70)
+
+        logger.info(f"  📌 Total de linhas: {len(df)}")
+        logger.info(f"  📋 Total de colunas: {len(df.columns)}")
 
         if "PLAYER_ID" in df.columns:
             logger.info(f"  👥 Jogadores únicos: {df['PLAYER_ID'].nunique()}")
 
-        if "Game_ID" in df.columns:
-            logger.info(f"  🎮 Partidas únicas: {df['Game_ID'].nunique()}")
+        if "GAME_ID" in df.columns:
+            logger.info(f"  🎮 Jogos únicos: {df['GAME_ID'].nunique()}")
 
         if "GAME_DATE" in df.columns:
-            logger.info(f"  📅 Período: {df['GAME_DATE'].min()} a {df['GAME_DATE'].max()}")
+            dates = pd.to_datetime(df["GAME_DATE"], errors="coerce")
+            logger.info(f"  📅 Período: {dates.min()} a {dates.max()}")
 
         if "PTS" in df.columns:
-            logger.info(f"  📈 Pontos por jogo: {df['PTS'].mean():.1f} ± {df['PTS'].std():.1f}")
+            pts_mean = df["PTS"].mean()
+            pts_std = df["PTS"].std()
+            logger.info(f"  📈 Pontos: {pts_mean:.1f} ± {pts_std:.1f}")
 
-        if "FGA" in df.columns:
-            logger.info(f"  🎯 Taxa de arremesso: {(df['FGM'] / df['FGA'].replace(0, np.nan)).mean() * 100:.1f}%")
-
-        logger.info(f"  📌 Total de linhas: {len(df)}")
         logger.info("=" * 70 + "\n")
 
 
-def main():
-    """Função principal para coleta de dados de partidas."""
-    collector = PlayerGameDataCollector()
+def main() -> None:
+    """Função principal."""
+    collector = BoxscoresCollector()
 
     season = "2025-26"
+    season_type = "Regular Season"
 
     logger.info("\n" + "🚀 " * 20)
-    logger.info("COLETA DE DADOS DE PARTIDAS POR JOGADOR")
+    logger.info("COLETA DE BOXSCORES")
     logger.info("🚀 " * 20 + "\n")
 
-    # 1. Coleta dados de jogadores ativos
-    df_players = collector.get_active_players(season)
-    if df_players is not None:
-        logger.info(f"✅ Carregados {len(df_players)} jogadores")
+    # Coleta dados
+    df = collector.get_player_stats_by_game(season, season_type)
 
-    # 2. Coleta dados de TODAS as partidas (muito mais eficiente)
-    df_games = collector.get_league_game_finder(season, "Regular Season")
+    if df is not None and not df.empty:
+        # Exibe resumo
+        collector.get_summary(df)
 
-    if df_games is not None:
-        # 3. Enriquece com verificação de status de roster
-        df_games = collector.enrich_with_roster_status(df_games, sample_size=100)
+        # Salva em CSV
+        collector.save_to_csv(df, f"nba_boxscores_{season}.csv")
 
-        # 4. Exibe resumo
-        collector.get_data_summary(df_games)
-
-        # 5. Salva em CSV
-        collector.save_game_data(df_games, f"nba_player_game_data_{season}.csv")
-
-    logger.info("\n✅ Coleta de dados concluída!")
-    logger.info("💡 Dica: Esses dados estão prontos para treinar o modelo de predição.")
+        logger.info("✅ Coleta concluída com sucesso!")
+    else:
+        logger.warning("⚠️  Nenhum dado foi coletado")
 
 
 if __name__ == "__main__":

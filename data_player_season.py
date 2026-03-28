@@ -91,7 +91,6 @@ if __name__ == "__main__":
 
     df_all = collect_multiple_seasons(seasons)
 
-    print(df_all.head())
     print(f"\nTotal de registros: {len(df_all)}")
 
     df_all.to_csv("../NBA/data/nba_player_stats_multi_season.csv", index=False)
