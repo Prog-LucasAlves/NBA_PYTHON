@@ -892,76 +892,80 @@ with tab_monitor:
 
     st.subheader("🤖 Monitoramento Automático em Tempo Real")
 
-    auto_monitor = AutomaticModelMonitor()
-    auto_metrics = auto_monitor.get_current_metrics()
+    # ✅ FONTE ÚNICA DE VERDADE: Histórico de apostas com Pts(Real)
+    bets_with_real = load_bets_csv()
+    bets_with_real_filled = bets_with_real[(bets_with_real["Pts(Real)"].notna()) & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "") & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "-")].copy()
 
+    # Calcular todas as métricas do CSV
+    if len(bets_with_real_filled) > 0:
+        bets_with_real_filled["actual"] = pd.to_numeric(bets_with_real_filled["Pts(Real)"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_with_real_filled["predicted"] = pd.to_numeric(bets_with_real_filled["Linha"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_with_real_filled["error"] = (bets_with_real_filled["actual"] - bets_with_real_filled["predicted"]).abs()
+        bets_with_real_filled["is_accurate"] = bets_with_real_filled["Resultado"].str.lower() == "green"
+
+        mae = bets_with_real_filled["error"].mean()
+        rmse = np.sqrt((bets_with_real_filled["error"] ** 2).mean())
+        accuracy = bets_with_real_filled["is_accurate"].mean() * 100
+        total_predictions = len(bets_with_real_filled)
+    else:
+        mae = 0.0
+        rmse = 0.0
+        accuracy = 0.0
+        total_predictions = 0
+
+    # Mostrar métricas
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
             label="Predições Registradas",
-            value=auto_metrics["total_predictions"],
-            delta="Histórico",
+            value=total_predictions,
+            delta="Com Pts(Real)",
             delta_color="normal",
         )
 
     with col2:
-        mae_value = auto_metrics["mae"]
         st.metric(
-            label="MAE Automático",
-            value=f"{mae_value:.2f} pts",
-            delta="Acurácia em produção" if isinstance(mae_value, (int, float)) and mae_value > 0 else "Sem dados",
+            label="MAE (Pontos)",
+            value=f"{mae:.2f} pts",
+            delta="Erro médio",
             delta_color="inverse",
         )
 
     with col3:
         st.metric(
             label="Acurácia",
-            value=f"{auto_metrics['accuracy_percent']:.1f}%",
+            value=f"{accuracy:.1f}%",
             delta="Taxa de acerto",
             delta_color="normal",
         )
 
     with col4:
-        status_str = str(auto_metrics["status"])
-        status_emoji = "✅" if status_str == "✅ SAUDÁVEL" else "⚠️" if "AVISO" in status_str else "❌"
-        st.metric(
-            label="Status",
-            value=status_emoji,
-            delta=status_str,
-            delta_color="normal",
-        )
+        if accuracy >= 80:
+            status = "✅ BOM"
+        elif accuracy >= 60:
+            status = "⚠️ AVISO"
+        else:
+            status = "❌ CRÍTICO"
+        st.metric(label="Status", value=status, delta_color="normal")
 
     st.divider()
-
-    # Análise de degradação
-    degradation = auto_monitor.get_degradation_analysis()
-    if degradation["has_degradation"]:
-        st.warning(f"⚠️ **DEGRADAÇÃO DETECTADA**: {degradation.get('message', 'Consulte detalhes abaixo')}")
-    else:
-        st.success(f"✅ Modelo estável: {degradation.get('message', 'Sem sinais de degradação')}")
 
     # Predições recentes
     st.subheader("📋 Últimas Predições Registradas")
 
-    # Usar PRIMARIAMENTE o histórico de apostas com Pts(Real) preenchido
-    bets_with_real = load_bets_csv()
-
-    # ✅ Filtro correto: verificar se NÃO é NaN e NÃO é string vazia
-    bets_with_real_filled = bets_with_real[(bets_with_real["Pts(Real)"].notna()) & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "") & (bets_with_real["Pts(Real)"].astype(str).str.strip() != "-")].copy()
-
     if len(bets_with_real_filled) > 0:
-        # Converter para formato compatível com display
-        bets_with_real_filled["timestamp"] = pd.to_datetime(bets_with_real_filled["Data"])
-        bets_with_real_filled["player"] = bets_with_real_filled["Jogador"]
-        bets_with_real_filled["actual"] = pd.to_numeric(bets_with_real_filled["Pts(Real)"].astype(str).str.replace(",", "."), errors="coerce")
-        bets_with_real_filled["predicted"] = pd.to_numeric(bets_with_real_filled["Linha"].astype(str).str.replace(",", "."), errors="coerce")
-        bets_with_real_filled["error"] = (bets_with_real_filled["actual"] - bets_with_real_filled["predicted"]).abs()
-        bets_with_real_filled["confidence"] = 0.85
-        # ✅ Usar Resultado da aposta (Green=acertou, Red=errou) ao invés de threshold de 1.5 pts
-        bets_with_real_filled["is_accurate"] = bets_with_real_filled["Resultado"].str.lower() == "green"
+        # Preparar dados para exibição
+        bets_display = bets_with_real_filled.copy()
+        bets_display["timestamp"] = pd.to_datetime(bets_display["Data"])
+        bets_display["player"] = bets_display["Jogador"]
+        bets_display["actual"] = pd.to_numeric(bets_display["Pts(Real)"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_display["predicted"] = pd.to_numeric(bets_display["Linha"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_display["error"] = (bets_display["actual"] - bets_display["predicted"]).abs()
+        bets_display["confidence"] = 0.85
+        bets_display["is_accurate"] = bets_display["Resultado"].str.lower() == "green"
 
-        display_df = bets_with_real_filled[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(15).copy()
+        display_df = bets_display[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(15).copy()
         display_df.columns = [
             "Data",
             "Jogador",
@@ -986,22 +990,46 @@ with tab_monitor:
 
     # Estatísticas diárias
     st.subheader("📊 Desempenho Diário (Últimos 7 dias)")
-    daily_stats = auto_monitor.get_daily_stats(7)
-    if not daily_stats.empty:
+
+    if len(bets_with_real_filled) > 0:
+        # Agrupar por data e calcular estatísticas
+        bets_stats = bets_with_real_filled.copy()
+        bets_stats["date"] = pd.to_datetime(bets_stats["Data"]).dt.date
+        bets_stats["actual"] = pd.to_numeric(bets_stats["Pts(Real)"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_stats["predicted"] = pd.to_numeric(bets_stats["Linha"].astype(str).str.replace(",", "."), errors="coerce")
+        bets_stats["error"] = (bets_stats["actual"] - bets_stats["predicted"]).abs()
+        bets_stats["is_accurate"] = bets_stats["Resultado"].str.lower() == "green"
+
+        daily_stats = (
+            bets_stats.groupby("date")
+            .agg(
+                MAE=("error", "mean"),
+                RMSE=("error", lambda x: np.sqrt((x**2).mean())),
+                ACCURACY=("is_accurate", lambda x: x.mean() * 100),
+                PREDICTIONS=("error", "count"),
+            )
+            .reset_index()
+            .sort_values("date", ascending=False)
+            .head(7)
+        )
+
         st.dataframe(daily_stats, use_container_width=True, hide_index=True)
 
         # Gráfico de acurácia diária
-        chart = (
-            alt.Chart(daily_stats)
-            .mark_area(opacity=0.3, line=True)
-            .encode(
-                x=alt.X("date:T", title="Data"),
-                y=alt.Y("ACCURACY:Q", title="Acurácia (%)", scale=alt.Scale(domain=[0, 100])),
-                tooltip=["date", "ACCURACY", "PREDICTIONS"],
+        if not daily_stats.empty:
+            chart = (
+                alt.Chart(daily_stats)
+                .mark_line(point=True, color="#667eea")
+                .encode(
+                    x=alt.X("date:T", title="Data"),
+                    y=alt.Y("ACCURACY:Q", title="Acurácia (%)", scale=alt.Scale(domain=[0, 100])),
+                    tooltip=["date", alt.Tooltip("ACCURACY:Q", format=".1f"), "PREDICTIONS"],
+                )
+                .properties(title="Tendência de Acurácia", height=300)
             )
-            .properties(title="Tendência de Acurácia", height=300)
-        )
-        st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, use_container_width=True)
+    else:
+        st.info("📝 Nenhum dado de desempenho diário disponível ainda.")
 
     st.divider()
     st.subheader("📈 Importância das Features")
