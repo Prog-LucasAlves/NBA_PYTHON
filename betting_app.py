@@ -529,21 +529,6 @@ with tab_predictor:
 
     st.divider()
 
-    # ========================================================================
-    # IMPORTÂNCIA DE FEATURES
-    # ========================================================================
-
-    st.subheader("Importância das Features do Modelo")
-
-    features = predictor.model_stats["feature_importance"]
-    features_df = pd.DataFrame({"Feature": list(features.keys()), "Importância": list(features.values())}).sort_values("Importância", ascending=False)
-
-    importance_chart = alt.Chart(features_df).mark_bar().encode(x=alt.X("Importância:Q", title="Coeficiente Absoluto"), y=alt.Y("Feature:N", sort="-x"), color=alt.value("#764ba2")).properties(title="Importância das Features na Previsão de Pontos", height=300)
-
-    st.altair_chart(importance_chart, use_container_width=True)
-
-    st.divider()
-
     st.markdown("""
     ### Aviso Legal
     Esta ferramenta é apenas para fins educacionais e de entretenimento.
