@@ -214,6 +214,50 @@ def load_predictor():
         return None
 
 
+def revalidate_model(predictor):
+    """
+    Revalida o modelo com validação cruzada e exibe relatório
+    Retorna True se modelo passou, False caso contrário
+    """
+    try:
+        from sklearn.model_selection import KFold, cross_val_score
+
+        # Preparar dados
+        X = predictor.X_scaled
+        y = predictor.y
+
+        if X is None or y is None:
+            return False, "Dados de treinamento não disponíveis"
+
+        # Validação cruzada
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        r2_scores = cross_val_score(predictor.model, X, y, cv=kf, scoring="r2")
+        rmse_scores = -cross_val_score(predictor.model, X, y, cv=kf, scoring="neg_mean_squared_error")
+        rmse_scores = [score**0.5 for score in rmse_scores]
+
+        # Calculadora métricas
+        r2_mean = r2_scores.mean()
+        r2_std = r2_scores.std()
+        rmse_mean = float(sum(rmse_scores)) / len(rmse_scores)
+        rmse_std = (sum((x - rmse_mean) ** 2 for x in rmse_scores) / len(rmse_scores)) ** 0.5
+
+        # Validar thresholds
+        is_valid = r2_mean > 0.85 and rmse_mean < 3.0
+
+        result = {
+            "r2_mean": r2_mean,
+            "r2_std": r2_std,
+            "rmse_mean": rmse_mean,
+            "rmse_std": rmse_std,
+            "is_valid": is_valid,
+        }
+
+        return True, result
+
+    except Exception as e:
+        return False, f"Erro na revalidação: {str(e)[:100]}"
+
+
 # ============================================================================
 # BARRA LATERAL - FILTROS E CONFIGURAÇÃO
 # ============================================================================
@@ -254,12 +298,50 @@ with col2:
 expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=int(predictor.player_averages[selected_player]["avg_min"]), help="Minutos estimados que o jogador vai jogar")
 
 st.sidebar.divider()
-st.sidebar.info(f"""
-Desempenho do Modelo
-- Score R2: {predictor.model_stats["r2"]:.4f}
-- RMSE: {predictor.model_stats["rmse"]:.2f} pts
-- MAE: {predictor.model_stats["mae"]:.2f} pts
+
+# ============================================================================
+# REVALIDAR MODELO
+# ============================================================================
+
+st.sidebar.subheader("🔄 Revalidação do Modelo")
+
+st.sidebar.warning("""
+⚠️ **Revalidar mensalmente ou a cada 500+ novos dados**
+
+A validação cruzada detecta:
+- Degradação de performance
+- Sinais de overfitting
+- Instabilidade do modelo
+
+Recomendação: Executar a cada 30 dias
 """)
+
+if st.sidebar.button("🔬 Revalidar Modelo Agora", use_container_width=True, help="Executa validação cruzada (5-fold)"):
+    with st.sidebar.status("Revalidando modelo...", expanded=True) as status:
+        try:
+            st.write("⏳ Iniciando validação cruzada...")
+            success, result = revalidate_model(predictor)
+
+            if success:
+                st.write("✅ Validação concluída!")
+                st.write(f"📊 R² Médio: {result['r2_mean']:.4f} (±{result['r2_std']:.4f})")
+                st.write(f"📊 RMSE Médio: {result['rmse_mean']:.2f} (±{result['rmse_std']:.2f})")
+
+                if result["is_valid"]:
+                    status.update(label="✅ Modelo VÁLIDO - Em produção", state="complete")
+                    st.success("✅ Modelo passou na validação!")
+                else:
+                    status.update(label="⚠️ Modelo requer atenção", state="error")
+                    st.warning("⚠️ Modelo apresenta degradação - considere retreinar")
+            else:
+                status.update(label=f"❌ Erro: {result}", state="error")
+                st.error(f"Erro na validação: {result}")
+
+        except Exception as e:
+            status.update(label="❌ Erro ao revalidar", state="error")
+            st.error(f"Erro: {str(e)[:100]}")
+else:
+    st.sidebar.caption("Clique para verificar saúde do modelo")
 
 # ============================================================================
 # ATUALIZAR LESÕES
