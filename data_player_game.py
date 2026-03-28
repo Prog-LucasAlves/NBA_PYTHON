@@ -131,8 +131,8 @@ class BoxscoresCollector:
             headers["User-Agent"] = USER_AGENTS[self.user_agent_index % len(USER_AGENTS)]
             self.user_agent_index += 1
 
-            # Timeout aumentado para 30s
-            response = self.session.get(BASE_URL, params=params, headers=headers, timeout=30)
+            # Timeout aumentado para 60s (API pode ser muito lenta)
+            response = self.session.get(BASE_URL, params=params, headers=headers, timeout=60)
             response.raise_for_status()
 
             # Valida que é JSON
@@ -153,7 +153,8 @@ class BoxscoresCollector:
             return data
 
         except requests.exceptions.Timeout:
-            logger.error("❌ Timeout na requisição (30s)")
+            logger.error("❌ Timeout na requisição (60s) - API muito lenta")
+            logger.info("💡 Dica: Tente novamente mais tarde ou use dados em cache")
             return None
         except requests.exceptions.HTTPError as e:
             logger.error(f"❌ Erro HTTP ({e.response.status_code}): {str(e)[:100]}")
