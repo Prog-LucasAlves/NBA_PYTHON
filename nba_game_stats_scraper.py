@@ -59,7 +59,7 @@ class NBAGameStatsScraper:
 
     def scrape_game_stats(
         self,
-        season: int = 2024,
+        season: int = 2025,
         max_games: Optional[int] = None,
         verbose: bool = True,
     ) -> pd.DataFrame:
