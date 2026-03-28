@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from nba_injury_scraper import NBAInjuryScraper
 from nba_prediction_model import NBAPointsPredictor
 from overfitting_monitor import OverfittingMonitor
 
@@ -259,6 +260,50 @@ Desempenho do Modelo
 - RMSE: {predictor.model_stats["rmse"]:.2f} pts
 - MAE: {predictor.model_stats["mae"]:.2f} pts
 """)
+
+# ============================================================================
+# ATUALIZAR LESÕES
+# ============================================================================
+
+st.sidebar.divider()
+st.sidebar.subheader("🏥 Atualizar Lesões")
+
+if st.sidebar.button("🔄 Atualizar Lista de Lesões", use_container_width=True, help="Scraping em tempo real de lesões no ESPN"):
+    with st.sidebar.status("Atualizando lesões...", expanded=True) as status:
+        try:
+            st.write("⏳ Iniciando scraper de lesões...")
+            scraper = NBAInjuryScraper()
+
+            st.write("📍 Coletando dados do ESPN...")
+            injuries = scraper.get_injuries_data()
+            st.write(f"✅ Coletadas {len(injuries)} lesões")
+
+            st.write("📝 Atualizando CSV de jogadores...")
+            df_updated = scraper.update_players_csv()
+
+            if df_updated is not None:
+                injured_count = len(df_updated[df_updated["Status"] == "Indisponível"])
+                available_count = len(df_updated) - injured_count
+
+                st.write("✅ CSV atualizado com sucesso!")
+                st.write(f"📊 Total: {len(df_updated)} jogadores")
+                st.write(f"❌ Indisponíveis: {injured_count}")
+                st.write(f"✅ Disponíveis: {available_count}")
+
+                status.update(label="✅ Lesões atualizadas com sucesso!", state="complete")
+
+                # Recarregar a página para refletir mudanças
+                st.success("✨ Dados atualizados! Recarregando aplicação...")
+                st.rerun()
+            else:
+                status.update(label="⚠️ Falha ao atualizar CSV", state="error")
+                st.warning("Falha ao atualizar CSV de lesões")
+
+        except Exception as e:
+            status.update(label="❌ Erro ao atualizar lesões", state="error")
+            st.error(f"Erro ao atualizar lesões: {str(e)[:100]}")
+else:
+    st.sidebar.caption("Clique para atualizar a lista de jogadores lesionados em tempo real")
 
 # ============================================================================
 # MAIN LAYOUT COM ABAS
