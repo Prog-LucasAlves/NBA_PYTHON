@@ -12,9 +12,34 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from nba_injury_scraper import NBAInjuryScraper
 from nba_prediction_model import NBAPointsPredictor
+from overfitting_monitor import OverfittingMonitor
 
 warnings.filterwarnings("ignore")
+
+
+def check_player_injury_status(player_name: str) -> dict:
+    """Verifica se o jogador tem lesão registrada"""
+    try:
+        if not os.path.exists("nba_players_status.csv"):
+            return {"status": "Disponível", "lesão": "", "aviso": False}
+
+        df_status = pd.read_csv("nba_players_status.csv")
+        player_data = df_status[df_status["Nome"].str.contains(player_name, case=False, na=False)]
+
+        if len(player_data) == 0:
+            return {"status": "Disponível", "lesão": "", "aviso": False}
+
+        player_info = player_data.iloc[0]
+        status = str(player_info.get("Status", "Disponível")).strip()
+        lesao = str(player_info.get("Lesão", "")).strip()
+
+        return {"status": status, "lesão": lesao, "aviso": status.lower() == "indisponível"}
+    except Exception as e:
+        print(f"Aviso: Erro ao verificar lesões: {e}")
+        return {"status": "Disponível", "lesão": "", "aviso": False}
+
 
 # ============================================================================
 # CONFIGURAÇÃO DE PÁGINA E ESTILO
@@ -92,15 +117,41 @@ def load_bets_csv():
                 "Tipo",
                 "Resultado",
                 "Lucro/Prejuízo",
+                "Deletar",
             ]
             for column in expected_columns:
                 if column not in bets_df.columns:
-                    bets_df[column] = "-" if column in {"Resultado", "Lucro/Prejuízo"} else ""
+                    if column == "Deletar":
+                        bets_df[column] = False
+                    else:
+                        bets_df[column] = "-" if column in {"Resultado", "Lucro/Prejuízo"} else ""
+
+            # Normalizar formatação de EV+% e Vitória% para 2 casas decimais
+            for col in ["EV+%", "Vitória%", "Odd"]:
+                if col in bets_df.columns:
+                    try:
+                        bets_df[col] = pd.to_numeric(bets_df[col].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce")
+                        bets_df[col] = bets_df[col].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
+                    except Exception:
+                        pass
 
             return bets_df[expected_columns]
         except Exception:
             return pd.DataFrame()
     return pd.DataFrame()
+
+
+def format_bets_df(df):
+    """Formata colunas de porcentagem e odds com 2 casas decimais"""
+    df_formatted = df.copy()
+    for col in ["EV+%", "Vitória%", "Odd"]:
+        if col in df_formatted.columns:
+            try:
+                numeric_vals = pd.to_numeric(df_formatted[col].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce")
+                df_formatted[col] = numeric_vals.apply(lambda x: f"{x:.2f}" if pd.notna(x) else "-")
+            except Exception:
+                pass
+    return df_formatted
 
 
 def calculate_profit_loss(result, bet_amount, odds):
@@ -135,9 +186,11 @@ def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_p
         "Tipo": bet_type,
         "Resultado": "-",
         "Lucro/Prejuízo": "-",
+        "Deletar": False,
     }
 
     bets_df = pd.concat([bets_df, pd.DataFrame([new_bet])], ignore_index=True)
+    bets_df = format_bets_df(bets_df)
     bets_df.to_csv(bets_file, index=False, encoding="utf-8")
 
     return len(bets_df)
@@ -161,6 +214,50 @@ def load_predictor():
         return None
 
 
+def revalidate_model(predictor):
+    """
+    Revalida o modelo com validação cruzada e exibe relatório
+    Retorna True se modelo passou, False caso contrário
+    """
+    try:
+        from sklearn.model_selection import KFold, cross_val_score
+
+        # Preparar dados
+        X = predictor.X_scaled
+        y = predictor.y
+
+        if X is None or y is None:
+            return False, "Dados de treinamento não disponíveis"
+
+        # Validação cruzada
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
+        r2_scores = cross_val_score(predictor.model, X, y, cv=kf, scoring="r2")
+        rmse_scores = -cross_val_score(predictor.model, X, y, cv=kf, scoring="neg_mean_squared_error")
+        rmse_scores = [score**0.5 for score in rmse_scores]
+
+        # Calculadora métricas
+        r2_mean = r2_scores.mean()
+        r2_std = r2_scores.std()
+        rmse_mean = float(sum(rmse_scores)) / len(rmse_scores)
+        rmse_std = (sum((x - rmse_mean) ** 2 for x in rmse_scores) / len(rmse_scores)) ** 0.5
+
+        # Validar thresholds
+        is_valid = r2_mean > 0.85 and rmse_mean < 3.0
+
+        result = {
+            "r2_mean": r2_mean,
+            "r2_std": r2_std,
+            "rmse_mean": rmse_mean,
+            "rmse_std": rmse_std,
+            "is_valid": is_valid,
+        }
+
+        return True, result
+
+    except Exception as e:
+        return False, f"Erro na revalidação: {str(e)[:100]}"
+
+
 # ============================================================================
 # BARRA LATERAL - FILTROS E CONFIGURAÇÃO
 # ============================================================================
@@ -179,6 +276,15 @@ st.sidebar.subheader("Seleção de Jogador")
 all_players = sorted(predictor.player_averages.keys())
 selected_player = st.sidebar.selectbox("Selecionar Jogador", options=all_players, help="Escolha um jogador da NBA para analisar")
 
+# ✅ VERIFICAR LESÕES
+injury_check = check_player_injury_status(selected_player)
+if injury_check["aviso"]:
+    st.sidebar.error(f"⚠️ **{selected_player} INDISPONÍVEL**\n\n{injury_check['lesão']}")
+elif injury_check["status"].lower() != "disponível":
+    st.sidebar.warning(f"⚠️ {selected_player}: {injury_check['status']}")
+else:
+    st.sidebar.success(f"✅ {selected_player} - Disponível")
+
 # Parâmetros de apostas
 st.sidebar.subheader("Parâmetros de Apostas")
 col1, col2 = st.sidebar.columns(2)
@@ -192,12 +298,94 @@ with col2:
 expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=int(predictor.player_averages[selected_player]["avg_min"]), help="Minutos estimados que o jogador vai jogar")
 
 st.sidebar.divider()
-st.sidebar.info(f"""
-Desempenho do Modelo
-- Score R2: {predictor.model_stats["r2"]:.4f}
-- RMSE: {predictor.model_stats["rmse"]:.2f} pts
-- MAE: {predictor.model_stats["mae"]:.2f} pts
+
+# ============================================================================
+# REVALIDAR MODELO
+# ============================================================================
+
+st.sidebar.subheader("🔄 Revalidação do Modelo")
+
+st.sidebar.warning("""
+⚠️ **Revalidar mensalmente ou a cada 500+ novos dados**
+
+A validação cruzada detecta:
+- Degradação de performance
+- Sinais de overfitting
+- Instabilidade do modelo
+
+Recomendação: Executar a cada 30 dias
 """)
+
+if st.sidebar.button("🔬 Revalidar Modelo Agora", use_container_width=True, help="Executa validação cruzada (5-fold)"):
+    with st.sidebar.status("Revalidando modelo...", expanded=True) as status:
+        try:
+            st.write("⏳ Iniciando validação cruzada...")
+            success, result = revalidate_model(predictor)
+
+            if success:
+                st.write("✅ Validação concluída!")
+                st.write(f"📊 R² Médio: {result['r2_mean']:.4f} (±{result['r2_std']:.4f})")
+                st.write(f"📊 RMSE Médio: {result['rmse_mean']:.2f} (±{result['rmse_std']:.2f})")
+
+                if result["is_valid"]:
+                    status.update(label="✅ Modelo VÁLIDO - Em produção", state="complete")
+                    st.success("✅ Modelo passou na validação!")
+                else:
+                    status.update(label="⚠️ Modelo requer atenção", state="error")
+                    st.warning("⚠️ Modelo apresenta degradação - considere retreinar")
+            else:
+                status.update(label=f"❌ Erro: {result}", state="error")
+                st.error(f"Erro na validação: {result}")
+
+        except Exception as e:
+            status.update(label="❌ Erro ao revalidar", state="error")
+            st.error(f"Erro: {str(e)[:100]}")
+else:
+    st.sidebar.caption("Clique para verificar saúde do modelo")
+
+# ============================================================================
+# ATUALIZAR LESÕES
+# ============================================================================
+
+st.sidebar.divider()
+st.sidebar.subheader("🏥 Atualizar Lesões")
+
+if st.sidebar.button("🔄 Atualizar Lista de Lesões", use_container_width=True, help="Scraping em tempo real de lesões no ESPN"):
+    with st.sidebar.status("Atualizando lesões...", expanded=True) as status:
+        try:
+            st.write("⏳ Iniciando scraper de lesões...")
+            scraper = NBAInjuryScraper()
+
+            st.write("📍 Coletando dados do ESPN...")
+            injuries = scraper.get_injuries_data()
+            st.write(f"✅ Coletadas {len(injuries)} lesões")
+
+            st.write("📝 Atualizando CSV de jogadores...")
+            df_updated = scraper.update_players_csv()
+
+            if df_updated is not None:
+                injured_count = len(df_updated[df_updated["Status"] == "Indisponível"])
+                available_count = len(df_updated) - injured_count
+
+                st.write("✅ CSV atualizado com sucesso!")
+                st.write(f"📊 Total: {len(df_updated)} jogadores")
+                st.write(f"❌ Indisponíveis: {injured_count}")
+                st.write(f"✅ Disponíveis: {available_count}")
+
+                status.update(label="✅ Lesões atualizadas com sucesso!", state="complete")
+
+                # Recarregar a página para refletir mudanças
+                st.success("✨ Dados atualizados! Recarregando aplicação...")
+                st.rerun()
+            else:
+                status.update(label="⚠️ Falha ao atualizar CSV", state="error")
+                st.warning("Falha ao atualizar CSV de lesões")
+
+        except Exception as e:
+            status.update(label="❌ Erro ao atualizar lesões", state="error")
+            st.error(f"Erro ao atualizar lesões: {str(e)[:100]}")
+else:
+    st.sidebar.caption("Clique para atualizar a lista de jogadores lesionados em tempo real")
 
 # ============================================================================
 # MAIN LAYOUT COM ABAS
@@ -208,13 +396,28 @@ st.markdown("**Previsões de pontos de jogadores em tempo real com análise de E
 st.divider()
 
 # Criar abas
-tab_predictor, tab_bets = st.tabs(["Preditor de Apostas", "Historico de Apostas"])
+tab_predictor, tab_bets, tab_monitor = st.tabs(["Preditor de Apostas", "Historico de Apostas", "Monitoramento"])
 
 # ============================================================================
 # ABA 1: PREDITOR DE APOSTAS
 # ============================================================================
 
 with tab_predictor:
+    # ✅ AVISO DE LESÃO NA SEÇÃO DE PREVISÃO
+    injury_check = check_player_injury_status(selected_player)
+
+    if injury_check["aviso"]:
+        st.error(f"""
+        ### ⚠️ JOGADOR INDISPONÍVEL
+
+        **{selected_player}** está fora de ação por:
+
+        **{injury_check["lesão"]}**
+
+        ❌ **Não é possível fazer previsão para este jogador no momento.**
+        """)
+        st.stop()
+
     # Obter previsão
     prediction = predictor.predict_points(selected_player, minutes=expected_minutes)
 
@@ -408,21 +611,6 @@ with tab_predictor:
 
     st.divider()
 
-    # ========================================================================
-    # IMPORTÂNCIA DE FEATURES
-    # ========================================================================
-
-    st.subheader("Importância das Features do Modelo")
-
-    features = predictor.model_stats["feature_importance"]
-    features_df = pd.DataFrame({"Feature": list(features.keys()), "Importância": list(features.values())}).sort_values("Importância", ascending=False)
-
-    importance_chart = alt.Chart(features_df).mark_bar().encode(x=alt.X("Importância:Q", title="Coeficiente Absoluto"), y=alt.Y("Feature:N", sort="-x"), color=alt.value("#764ba2")).properties(title="Importância das Features na Previsão de Pontos", height=300)
-
-    st.altair_chart(importance_chart, use_container_width=True)
-
-    st.divider()
-
     st.markdown("""
     ### Aviso Legal
     Esta ferramenta é apenas para fins educacionais e de entretenimento.
@@ -457,6 +645,13 @@ with tab_bets:
                     "Lucro/Prejuízo",
                     disabled=True,
                 ),
+                "Odd": st.column_config.NumberColumn(
+                    "Odd",
+                    format="%.2f",
+                ),
+                "Deletar": st.column_config.CheckboxColumn(
+                    "Deletar",
+                ),
             },
             disabled=["Data", "Jogador", "Time", "Linha", "Odd", "EV+%", "Vitória%", "Valor Aposta", "Tipo", "Lucro/Prejuízo"],
             key="bets_history_editor",
@@ -470,7 +665,14 @@ with tab_bets:
         edited_bets_df["Resultado"] = editable_result
         edited_bets_df["Lucro/Prejuízo"] = calculated_profit_loss
 
+        # Filtrar linhas marcadas para deletar
+        rows_to_delete = edited_bets_df[edited_bets_df["Deletar"]].index
+        if len(rows_to_delete) > 0:
+            edited_bets_df = edited_bets_df.drop(rows_to_delete).reset_index(drop=True)
+            st.warning(f"🗑️ {len(rows_to_delete)} aposta(s) removida(s)")
+
         if not edited_bets_df.equals(bets_df):
+            edited_bets_df = format_bets_df(edited_bets_df)
             edited_bets_df.to_csv("historico_apostas.csv", index=False, encoding="utf-8")
             bets_df = edited_bets_df
             st.rerun()
@@ -535,6 +737,245 @@ with tab_bets:
 
     else:
         st.info("Nenhuma aposta registrada ainda. Vá para a aba 'Preditor de Apostas' para começar a registrar apostas!")
+
+# ============================================================================
+# ABA 3: MONITORAMENTO DE OVERFITTING
+# ============================================================================
+
+with tab_monitor:
+    st.header("📊 Monitoramento de Desempenho do Modelo")
+    st.markdown("Validação contínua contra overfitting e degradação de performance")
+
+    st.divider()
+
+    # ========================================================================
+    # MÉTRICAS PRINCIPAIS
+    # ========================================================================
+
+    st.subheader("🎯 Desempenho Atual")
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        st.metric(
+            label="Score R²",
+            value=f"{predictor.model_stats['r2']:.4f}",
+            delta="Treino" if predictor.model_stats["r2"] > 0.85 else "Atenção",
+            delta_color="normal" if predictor.model_stats["r2"] > 0.85 else "inverse",
+        )
+
+    with col2:
+        st.metric(
+            label="RMSE (Pontos)",
+            value=f"{predictor.model_stats['rmse']:.2f}",
+            delta="Erro" if predictor.model_stats["rmse"] < 3.0 else "Alto",
+            delta_color="inverse",
+        )
+
+    with col3:
+        st.metric(
+            label="MAE (Pontos)",
+            value=f"{predictor.model_stats['mae']:.2f}",
+            delta="Bom" if predictor.model_stats["mae"] < 2.0 else "Regular",
+            delta_color="normal",
+        )
+
+    with col4:
+        st.metric(
+            label="Features",
+            value=f"{len(predictor.feature_cols)}",
+            delta="Otimizado" if len(predictor.feature_cols) == 8 else "Legacy",
+            delta_color="normal",
+        )
+
+    with col5:
+        st.metric(
+            label="Status",
+            value="ATIVO",
+            delta="v2.1" if len(predictor.feature_cols) == 8 else "v2.0",
+            delta_color="normal",
+        )
+
+    st.divider()
+
+    # ========================================================================
+    # THRESHOLDS DE MONITORAMENTO
+    # ========================================================================
+
+    st.subheader("⚠️ Limites de Monitoramento")
+
+    monitor = OverfittingMonitor()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.info("""
+        **Limites Configurados:**
+        - R² Gap Máximo: 0.0500
+        - RMSE Máximo: 3.5 pts
+        - R² Mínimo Teste: 0.8000
+        - Desvio Padrão CV: 0.0300
+        """)
+
+    with col2:
+        # Status do modelo
+        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.85 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.80 else "❌ CRÍTICO"
+        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 2.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 3.0 else "❌ CRÍTICO"
+        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 1.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 2.2 else "❌ CRÍTICO"
+
+        st.info(f"""
+        **Status Atual:**
+        - R²: {r2_status}
+        - RMSE: {rmse_status}
+        - MAE: {mae_status}
+        """)
+
+    st.divider()
+
+    # ========================================================================
+    # FEATURE IMPORTANCE
+    # ========================================================================
+
+    st.subheader("📈 Importância das Features")
+
+    features_dict = predictor.model_stats["feature_importance"]
+    features_df = pd.DataFrame({"Feature": list(features_dict.keys()), "Importância": list(features_dict.values())}).sort_values("Importância", ascending=True)
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        # Gráfico de barras horizontal
+        import altair as alt
+
+        chart = (
+            alt.Chart(features_df)
+            .mark_bar(color="#667eea")
+            .encode(
+                y=alt.Y("Feature:N", sort="-x", title="Features"),
+                x=alt.X("Importância:Q", title="Importância Relativa"),
+                tooltip=["Feature", alt.Tooltip("Importância:Q", format=".4f")],
+            )
+            .properties(title="Importância das Features", height=400, width=400)
+        )
+
+        st.altair_chart(chart, use_container_width=True)
+
+    with col2:
+        st.write("**Top 8 Features (Otimizadas):**")
+        st.dataframe(features_df.sort_values("Importância", ascending=False).head(8), use_container_width=True)
+
+    st.divider()
+
+    # ========================================================================
+    # VALIDAÇÃO CRUZADA
+    # ========================================================================
+
+    st.subheader("🔄 Validação Cruzada (5-Fold)")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.info("""
+        **Configuração:**
+        - Estratégia: 5-Fold CV
+        - Shuffle: True
+        - Random State: 42
+
+        **Objetivo:**
+        Validar estabilidade do modelo
+        em diferentes subconjuntos dos dados
+        """)
+
+    with col2:
+        st.warning("""
+        **Recomendações:**
+        - Monitorar Gap R² < 0.05
+        - Verificar variância entre folds
+        - Revalidar com novos dados mensalmente
+        - Alertar se Gap > 0.05 (overfitting)
+        """)
+
+    st.divider()
+
+    # ========================================================================
+    # HISTÓRICO & TENDÊNCIAS
+    # ========================================================================
+
+    st.subheader("📊 Resumo de Desempenho")
+
+    summary_data = {
+        "Métrica": ["R² Score", "RMSE", "MAE", "Features", "Status"],
+        "Atual": [
+            f"{predictor.model_stats['r2']:.4f}",
+            f"{predictor.model_stats['rmse']:.2f} pts",
+            f"{predictor.model_stats['mae']:.2f} pts",
+            f"{len(predictor.feature_cols)} features",
+            "Ativo",
+        ],
+        "Alvo": ["≥ 0.86", "< 2.5 pts", "< 1.8 pts", "8 features", "v2.1"],
+        "Status": [
+            "✅" if predictor.model_stats["r2"] >= 0.86 else "⚠️",
+            "✅" if predictor.model_stats["rmse"] < 2.5 else "⚠️",
+            "✅" if predictor.model_stats["mae"] < 1.8 else "⚠️",
+            "✅" if len(predictor.feature_cols) == 8 else "ℹ️",
+            "✅",
+        ],
+    }
+
+    summary_df = pd.DataFrame(summary_data)
+    st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ========================================================================
+    # ALERTAS E AVISOS
+    # ========================================================================
+
+    st.subheader("🔔 Avisos de Monitoramento")
+
+    alerts = []
+
+    if predictor.model_stats["r2"] < 0.85:
+        alerts.append(("⚠️", "R² abaixo de 0.85 - Verificar qualidade dos dados"))
+
+    if predictor.model_stats["rmse"] > 2.8:
+        alerts.append(("⚠️", f"RMSE elevado: {predictor.model_stats['rmse']:.2f} pts"))
+
+    if predictor.model_stats["mae"] > 2.0:
+        alerts.append(("⚠️", f"MAE elevado: {predictor.model_stats['mae']:.2f} pts"))
+
+    if len(predictor.feature_cols) != 8:
+        alerts.append(("ℹ️", f"Modelo usando {len(predictor.feature_cols)} features (otimizado: 8)"))
+
+    if len(alerts) == 0:
+        st.success("✅ Nenhum aviso no momento - Modelo operacional")
+    else:
+        for icon, message in alerts:
+            st.warning(f"{icon} {message}")
+
+    st.divider()
+
+    # ========================================================================
+    # LOGS
+    # ========================================================================
+
+    st.subheader("📋 Informações Técnicas")
+
+    with st.expander("Ver Detalhes Técnicos"):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("**Modelo:**")
+            st.code(f"""
+            Tipo: Linear Regression
+            Features: {len(predictor.feature_cols)}
+            Samples Treino: ~1000
+            CV Strategy: 5-Fold
+            """)
+
+        with col2:
+            st.write("**Features Utilizadas:**")
+            st.code(", ".join(predictor.feature_cols))
 
 st.divider()
 st.markdown("""

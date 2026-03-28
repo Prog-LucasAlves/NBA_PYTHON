@@ -49,7 +49,9 @@ class NBAPointsPredictor:
         self.df = self.df[self.df["GP"] >= 10].copy()
 
         # Criar colunas de features - selecionar preditores significativos
-        feature_candidates = ["MIN", "FG_PCT", "FG3_PCT", "FT_PCT", "AST", "REB", "OREB", "DREB", "STL", "BLK", "TOV"]
+        # v2.1 OTIMIZADO: Removidas features colineares (OREB, DREB) e instáveis (BLK)
+        # Referência: ANALISE_MELHORIAS_MODELO.md
+        feature_candidates = ["MIN", "FG_PCT", "FG3_PCT", "FT_PCT", "AST", "REB", "STL", "TOV"]
 
         self.feature_cols = [col for col in feature_candidates if col in self.df.columns]
 
