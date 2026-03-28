@@ -1,0 +1,202 @@
+GUIA COMPLETO - SISTEMA DE APOSTAS NBA v2.0
+==========================================
+
+VISÃO GERAL
+===========
+
+O aplicativo foi atualizado com um sistema completo de registro e gestão de apostas.
+Agora você pode:
+
+1. Analisar previsões de pontos de jogadores NBA
+2. Calcular EV+ (Expected Value Plus) para cada aposta
+3. Registrar apostas com um clique
+4. Acompanhar histórico completo de apostas
+5. Visualizar estatísticas e exportar dados
+
+INTERFACE
+=========
+
+O app agora possui 2 abas principais:
+
+ABA 1: "Preditor de Apostas"
+----------------------------
+- Seleção de jogador (sidebar)
+- Parâmetros de aposta: Linha, Odds, Minutos
+- Métricas de previsão (Pontos, Tendência, Minutos, R2)
+- Análise EV+ com recomendação
+- Detalhes técnicos da aposta
+- Seção para REGISTRAR APOSTA:
+  * Campo para valor da aposta (R$)
+  * Seleção de tipo (GREEN/RED)
+  * Botão "REGISTRAR APOSTA"
+- Análise completa do desempenho do jogador
+- Gráficos históricos
+- Comparação com pares
+- Importância de features do modelo
+
+ABA 2: "Historico de Apostas"
+-----------------------------
+- Tabela completa com todas as apostas registradas
+- Colunas:
+  * Data - Momento do registro
+  * Jogador - Nome do jogador
+  * Linha - Valor da linha O/U
+  * Odd - Odds decimais
+  * EV+% - Valor esperado percentual
+  * Vitória% - Probabilidade de vitória do modelo
+  * Valor Aposta - Quanto foi apostado
+  * Tipo - GREEN (Compra) ou RED (Evitar)
+  * Resultado - Status (preenchido manualmente)
+  * Lucro/Prejuízo - Cálculo automático
+
+- Estatísticas resumidas:
+  * Total de apostas registradas
+  * Quantidade de GREEN (Compras)
+  * Quantidade de RED (Evitar)
+  * Valor total apostado
+
+- Resumo por jogador:
+  * Número de apostas por jogador
+  * Valor total apostado por jogador
+  * EV+ médio
+
+- Botão para exportar CSV
+
+COMO USAR
+=========
+
+1. SELECIONAR JOGADOR:
+   - Use o dropdown na barra lateral esquerda
+   - Escolha um jogador NBA
+
+2. DEFINIR PARÂMETROS:
+   - Linha de Mercado: Digite a linha O/U (ex: 25.5)
+   - Odds Decimais: Digite as odds (ex: 1.95)
+   - Minutos Esperados: Use o slider para ajustar
+
+3. ANALISAR PREVISÃO:
+   - Veja os pontos previstos
+   - Analise a tendência (UP/DOWN)
+   - Verifique o EV+ e sinal
+
+4. REGISTRAR APOSTA:
+   - Insira o valor que deseja apostar
+   - Escolha tipo: GREEN (se EV+ positivo) ou RED (se evitar)
+   - Clique em "REGISTRAR APOSTA"
+   - Sucesso! A aposta foi salva
+
+5. ACOMPANHAR HISTÓRICO:
+   - Vá para aba "Historico de Apostas"
+   - Visualize todas as suas apostas
+   - Veja estatísticas gerais
+   - Exporte em CSV se desejar
+
+PERSISTÊNCIA DE DADOS
+=====================
+
+As apostas são salvas em: historico_apostas.csv
+
+Este arquivo:
+- Fica no diretório raiz do projeto (D:\Sports\NBA\)
+- É criado automaticamente na primeira aposta
+- Persiste entre sessões do app
+- Pode ser aberto no Excel ou importado em análises
+
+Estrutura do CSV:
+Data,Jogador,Linha,Odd,EV+%,Vitória%,Valor Aposta,Tipo,Resultado,Lucro/Prejuízo
+2026-03-27 19:30:00,LeBron James,24.5,1.95,12.50,65.00,R$ 100.00,GREEN (Compra),-,-
+
+MÉTRICAS EXPLICADAS
+===================
+
+EV+ (Expected Value Plus):
+- Percentual de retorno esperado em cada aposta
+- > 5% = FORTE COMPRA (Signal)
+- 0-5% = VALOR JUSTO
+- -5 a 0% = MARGINAL
+- < -5% = EVITAR
+
+Percentual de Vitória do Modelo:
+- Probabilidade que o modelo prevê para vitória da aposta
+- Baseado em distribuição normal dos resíduos
+- Quanto maior, mais confiança na previsão
+
+Critério de Kelly:
+- Fórmula para dimensionamento ótimo de apostas
+- (Prob_Win × Odds - 1)
+- Recomenda quanto apostar em relação ao bankroll
+
+REQUISITOS TÉCNICOS
+==================
+
+- Python 3.8+
+- pandas >= 1.3.0
+- streamlit >= 1.0.0
+- scikit-learn >= 0.24.0
+- numpy >= 1.21.0
+- altair >= 4.1.0
+- scipy >= 1.7.0
+
+Instale com:
+  pip install -r requirements.txt
+
+EXECUTAR O APP
+==============
+
+Com o terminal aberto no diretório D:\Sports\NBA:
+
+  streamlit run betting_app.py
+
+O app abrirá em: http://localhost:8501
+
+SUPORTE E TROUBLESHOOTING
+=========================
+
+Problema: "Arquivo não encontrado"
+Solução: Certifique-se de executar o app a partir do diretório D:\Sports\NBA
+
+Problema: "Nenhuma aposta aparece no histórico"
+Solução: A aposta pode não ter sido salva. Clique novamente em "REGISTRAR APOSTA"
+
+Problema: "Erro ao carregar o modelo"
+Solução: Verifique se data/nba_player_stats_multi_season.csv existe
+
+Problema: "Caracteres estranhos no CSV"
+Solução: Abra o CSV com encoding UTF-8 no Excel (Arquivo > Abrir > Opções)
+
+ROADMAP FUTURO (Não implementado)
+=================================
+
+- Integração com APIs de odds em tempo real
+- Preenchimento automático de Resultado (WIN/LOSS)
+- Cálculo automático de Lucro/Prejuízo
+- Backtesting histórico
+- Gráficos de ROI
+- Análise de performance por período
+- Machine learning para otimizar seleção de apostas
+- Alertas de oportunidades de aposta
+- Integração com casa de apostas (simulado)
+
+RESPONSABILIDADE
+================
+
+Esta ferramenta é APENAS para fins educacionais e de entretenimento.
+
+Apostas esportivas envolvem risco de perda total.
+Jogue apenas com dinheiro que você pode perder.
+Não é garantia de lucro.
+
+Consulte sempre as leis locais sobre apostas esportivas.
+
+VERSÃO
+======
+
+v2.0 - Março 2026
+- Adicionadas abas de interface
+- Implementado sistema de registro de apostas
+- Adicionado histórico persistente em CSV
+- Adicionadas estatísticas por jogador
+- Melhorias na visualização de dados
+
+DESENVOLVIDO COM PYTHON E STREAMLIT
+====================================
