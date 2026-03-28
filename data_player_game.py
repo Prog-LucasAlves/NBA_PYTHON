@@ -1,311 +1,322 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Coleta dados de boxscores de jogadores da NBA.
-
-Coleta dados de: https://www.nba.com/stats/players/boxscores
-
-Implementações:
-- Retry strategy com backoff exponencial (evita rate limiting)
-- User-Agent rotation (evita detecção de bot)
-- Cache em JSON (recuperação instantânea)
-- Timeout aumentado (API pode ser lenta)
-- Logging detalhado
-- Tratamento robusto de erros
-"""
-
-import json
-import logging
-import os
 import time
-from typing import Dict, Optional
+from typing import Dict, List
 
 import pandas as pd
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+# ===============================
+# Configurações globais
+# ===============================
 
-BASE_URL = "https://stats.nba.com/stats/leaguedashplayerstats"
+BASE_URL = "https://stats.nba.com/stats/leaguegamelog"
 
-# User-Agents para rotation (evita bloqueios)
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-]
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Accept": "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9", "Referer": "https://www.nba.com/", "Origin": "https://www.nba.com", "Connection": "keep-alive"}
 
-HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Referer": "https://www.nba.com/stats/players/boxscores",
-}
-
-SLEEP_SECONDS = 1.2  # Delay entre requisições
+SLEEP_SECONDS = 1.2
 
 
-class BoxscoresCollector:
-    """Coleta dados de boxscores de jogadores."""
+# ===============================
+# Função para verificar total de registros
+# ===============================
 
-    def __init__(self, cache_dir: str = "data/.cache"):
-        """
-        Inicializa o coletor.
 
-        Args:
-            cache_dir: Diretório para cache de dados
-        """
-        self.session = requests.Session()
+def get_total_records_count(season: str, season_type: str = "Regular Season") -> int:
+    """
+    Verifica quantos registros existem para uma temporada.
+    """
+    params = {"LeagueID": "00", "Season": season, "SeasonType": season_type, "PlayerOrTeam": "P", "Counter": 1, "Offset": 0, "Direction": "DESC", "Sorter": "DATE"}
 
-        # Configura retry strategy com backoff exponencial
-        retry_strategy = Retry(
-            total=3,  # Total de tentativas
-            status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET", "HEAD"],
-            backoff_factor=1.5,  # Espera 1.5s, 3s, 4.5s entre tentativas
-        )
-        adapter = HTTPAdapter(max_retries=retry_strategy)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
+    try:
+        response = requests.get(BASE_URL, headers=HEADERS, params={k: str(v) for k, v in params.items()}, timeout=30)
+        response.raise_for_status()
+        data = response.json()
 
-        self.session.headers.update(HEADERS)
-        self.cache_dir = cache_dir
-        os.makedirs(cache_dir, exist_ok=True)
-        self.user_agent_index = 0
+        # Tenta encontrar o total nos metadados
+        result_set = data["resultSets"][0]
 
-    def _get_cache_path(self, params: Dict) -> str:
-        """Gera caminho de cache para uma requisição."""
-        param_str = "_".join(f"{k}={v}" for k, v in sorted(params.items()))
-        cache_file = f"boxscores_{param_str}.json"
-        return os.path.join(self.cache_dir, cache_file)
+        # Verifica se há um campo totalSets
+        if "metadata" in data and "totalSets" in data["metadata"]:
+            return int(data["metadata"]["totalSets"])
 
-    def _load_from_cache(self, cache_path: str) -> Optional[Dict]:
-        """Carrega dados do cache se existirem."""
-        if os.path.exists(cache_path):
-            try:
-                with open(cache_path, "r", encoding="utf-8") as f:
-                    logger.debug(f"📦 Usando cache: {os.path.basename(cache_path)}")
-                    return json.load(f)
-            except Exception as e:
-                logger.warning(f"⚠️  Erro ao ler cache: {str(e)}")
-        return None
+        # Alternativa: verifica o número de resultados na primeira página
+        # e assume que é o total (se Counter=1, rowSet terá apenas 1 registro)
+        return len(result_set.get("rowSet", []))
 
-    def _save_to_cache(self, cache_path: str, data: Dict) -> None:
-        """Salva dados em cache."""
-        try:
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump(data, f)
-        except Exception as e:
-            logger.warning(f"⚠️  Erro ao salvar cache: {str(e)}")
+    except Exception as e:
+        print(f"  - Erro ao verificar total: {e}")
+        return -1
 
-    def _make_request(self, params: Dict, use_cache: bool = True) -> Optional[Dict]:
-        """
-        Faz requisição com cache, retry e rate limiting.
 
-        Args:
-            params: Parâmetros da requisição
-            use_cache: Se True, usa cache quando disponível
+# ===============================
+# Função principal de coleta CORRIGIDA
+# ===============================
 
-        Returns:
-            Dados JSON ou None se falhar
-        """
-        cache_path = self._get_cache_path(params)
 
-        # Tenta carregar do cache
-        if use_cache:
-            cached_data = self._load_from_cache(cache_path)
-            if cached_data:
-                return cached_data
+def get_player_game_logs(season: str, season_type: str = "Regular Season", show_progress: bool = True) -> pd.DataFrame:
+    """
+    Coleta o game log (box score por jogo) para todos os jogadores em uma temporada.
+    Usa paginação baseada em data/sorter.
+    """
+    all_rows = []
+    last_date = None
+    page_size = 500
+    page_num = 1
+    max_pages = 100  # Limite de segurança para evitar loops infinitos
+
+    if show_progress:
+        print(f"  Iniciando coleta para {season}...")
+
+    while page_num <= max_pages:
+        params = {
+            "LeagueID": "00",
+            "Season": season,
+            "SeasonType": season_type,
+            "PlayerOrTeam": "P",
+            "Counter": page_size,
+            "Offset": 0,  # Mantém offset 0, usa DateFrom/DateTo para paginar
+            "Direction": "DESC",
+            "Sorter": "DATE",
+        }
+
+        # Se temos uma última data, usamos DateTo para pegar registros anteriores
+        if last_date:
+            params["DateTo"] = last_date
+
+        if show_progress:
+            if last_date:
+                print(f"    Página {page_num}: buscando registros anteriores a {last_date}...", end=" ")
+            else:
+                print(f"    Página {page_num}: buscando registros mais recentes...", end=" ")
 
         try:
-            logger.debug(f"📡 Requisitando: {BASE_URL}")
-            logger.debug(f"   Params: {params}")
-
-            # Rotaciona User-Agent
-            headers = HEADERS.copy()
-            headers["User-Agent"] = USER_AGENTS[self.user_agent_index % len(USER_AGENTS)]
-            self.user_agent_index += 1
-
-            # Timeout aumentado para 60s (API pode ser muito lenta)
-            response = self.session.get(BASE_URL, params=params, headers=headers, timeout=60)
+            response = requests.get(BASE_URL, headers=HEADERS, params={k: str(v) for k, v in params.items()}, timeout=30)
             response.raise_for_status()
-
-            # Valida que é JSON
-            content_type = response.headers.get("content-type", "")
-            if "application/json" not in content_type:
-                logger.warning(f"⚠️  Content-Type não é JSON: {content_type}")
-                logger.debug(f"   Corpo: {response.text[:200]}")
-                return None
-
             data = response.json()
 
-            # Salva em cache
-            self._save_to_cache(cache_path, data)
+            result_set = data["resultSets"][0]
+            rows = result_set.get("rowSet", [])
 
-            # Respeita rate limit
+            if not rows:
+                if show_progress:
+                    print("sem dados")
+                break
+
+            # Verifica se os registros são novos
+            if show_progress:
+                print(f"{len(rows)} registros encontrados")
+
+            # Adiciona os registros
+            all_rows.extend(rows)
+
+            # Obtém a data mais antiga do lote atual
+            # Assumindo que a data está na coluna 3 (índice pode variar)
+            # Precisamos identificar a coluna de data corretamente
+            date_column_index = None
+            for i, header in enumerate(result_set["headers"]):
+                if "GAME_DATE" in header or "DATE" in header:
+                    date_column_index = i
+                    break
+
+            if date_column_index is not None and len(rows) > 0:
+                # Pega a data mais antiga (último registro da lista)
+                oldest_date = rows[-1][date_column_index]
+                if oldest_date == last_date:
+                    # Se a data não mudou, paramos para evitar loop
+                    if show_progress:
+                        print("    Data não mudou, encerrando coleta.")
+                    break
+                last_date = oldest_date
+            else:
+                # Se não encontrou coluna de data, usa o número de registros como critério
+                if len(rows) < page_size:
+                    if show_progress:
+                        print(f"    Última página: {len(rows)} registros < {page_size}")
+                    break
+
+            page_num += 1
+
+            # Se o número de registros for menor que o page_size, é a última página
+            if len(rows) < page_size:
+                if show_progress:
+                    print(f"    Coleta concluída: última página com {len(rows)} registros")
+                break
+
             time.sleep(SLEEP_SECONDS)
 
-            return data
-
-        except requests.exceptions.Timeout:
-            logger.error("❌ Timeout na requisição (60s) - API muito lenta")
-            logger.info("💡 Dica: Tente novamente mais tarde ou use dados em cache")
-            return None
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"❌ Erro HTTP ({e.response.status_code}): {str(e)[:100]}")
-            logger.debug(f"   Resposta: {e.response.text[:200]}")
-            return None
-        except requests.exceptions.JSONDecodeError as e:
-            logger.error(f"❌ Erro ao decodificar JSON: {str(e)[:100]}")
-            logger.debug("   ℹ️  A página pode estar em HTML, não JSON")
-            logger.debug(f"   URL: {BASE_URL}")
-            logger.debug(f"   Params: {params}")
-            return None
         except Exception as e:
-            logger.error(f"❌ Erro na requisição: {str(e)[:100]}")
-            return None
+            print(f"\n  ❌ Erro na página {page_num}: {e}")
+            break
 
-    def get_player_stats_by_game(self, season: str = "2025-26", season_type: str = "Regular Season", measure_type: str = "Base") -> Optional[pd.DataFrame]:
-        """
-        Coleta estatísticas de jogadores por jogo.
+    if not all_rows:
+        if show_progress:
+            print(f"  ⚠️ Nenhum registro encontrado para {season}")
+        return pd.DataFrame()
 
-        Args:
-            season: Temporada (ex: "2025-26")
-            season_type: Tipo de temporada ('Regular Season', 'Playoffs')
-            measure_type: Tipo de medida ('Base', 'Advanced')
+    # Cria DataFrame com os dados coletados
+    df = pd.DataFrame(all_rows, columns=result_set["headers"])
+    df["SEASON"] = season
 
-        Returns:
-            DataFrame com estatísticas ou None se falhar
-        """
+    # Remove duplicatas baseadas em SEASON_ID e PLAYER_ID (ou outra combinação única)
+    # Identifica colunas únicas
+    unique_cols = []
+    for col in ["GAME_ID", "PLAYER_ID", "SEASON_ID"]:
+        if col in df.columns:
+            unique_cols.append(col)
+
+    if unique_cols:
+        initial_count = len(df)
+        df = df.drop_duplicates(subset=unique_cols)
+        if show_progress and len(df) < initial_count:
+            print(f"    Removidas {initial_count - len(df)} duplicatas")
+
+    return df
+
+
+# ===============================
+# Função para verificar todas as temporadas
+# ===============================
+
+
+def check_all_seasons(seasons: List[str]) -> Dict[str, int]:
+    """
+    Verifica quantos registros existem em cada temporada.
+    """
+    print("=" * 60)
+    print("VERIFICANDO VOLUME DE DADOS POR TEMPORADA")
+    print("=" * 60)
+
+    records_count = {}
+
+    for season in seasons:
+        print(f"\nVerificando temporada {season}...", end=" ")
+        count = get_total_records_count(season)
+
+        if count > 0:
+            print(f"{count:,} registros encontrados")
+            records_count[season] = count
+        elif count == 0:
+            print("0 registros encontrados")
+            records_count[season] = 0
+        else:
+            print("ERRO - não foi possível verificar")
+            records_count[season] = -1
+
+    print("\n" + "=" * 60)
+    print("RESUMO POR TEMPORADA:")
+    print("-" * 60)
+
+    total_estimated = 0
+    for season, count in records_count.items():
+        if count > 0:
+            print(f"  {season}: {count:,} registros")
+            total_estimated += count
+        elif count == 0:
+            print(f"  {season}: NENHUM registro")
+        else:
+            print(f"  {season}: ❌ Erro na verificação")
+
+    print("-" * 60)
+    print(f"  TOTAL ESTIMADO: {total_estimated:,} registros")
+    print("=" * 60)
+
+    return records_count
+
+
+# ===============================
+# Loop de múltiplas temporadas
+# ===============================
+
+
+def collect_multiple_seasons(seasons: List[str], check_first: bool = True) -> pd.DataFrame:
+    """
+    Coleta dados de múltiplas temporadas.
+    """
+    # Verificação prévia
+    if check_first:
+        check_all_seasons(seasons)
+
+        print("\nDeseja prosseguir com a coleta? (s/n): ", end="")
+        resposta = input().strip().lower()
+
+        if resposta != "s":
+            print("Coleta cancelada pelo usuário.")
+            return pd.DataFrame()
+
+    # Coleta efetiva
+    print("\n" + "=" * 60)
+    print("INICIANDO COLETA DE DADOS")
+    print("=" * 60)
+
+    all_dfs = []
+
+    for i, season in enumerate(seasons, 1):
+        print(f"\n[{i}/{len(seasons)}] Coletando temporada: {season}")
+
         try:
-            logger.info(f"🏀 Coletando boxscores da temporada {season}...")
+            df = get_player_game_logs(season, show_progress=True)
 
-            params = {
-                "Season": season,
-                "SeasonType": season_type,
-                "MeasureType": measure_type,
-                "PerMode": "PerGame",
-                "LeagueID": "00",
-                "PageSize": 1000,
-                "PageNum": 1,
-            }
-
-            data = self._make_request(params, use_cache=True)
-
-            if not data:
-                logger.warning(f"⚠️  Nenhum dado retornado para {season}")
-                return None
-
-            # Extrair dados de jogadores
-            player_stats = data.get("resultSet", {}).get("rowSet", [])
-            headers = data.get("resultSet", {}).get("headers", [])
-
-            if not player_stats or not headers:
-                logger.warning("⚠️  Nenhum dado de jogador encontrado")
-                return None
-
-            df = pd.DataFrame(player_stats, columns=headers)
-
-            # Adicionar coluna de temporada
-            df["SEASON"] = season
-
-            logger.info(f"✅ Coletados {len(df)} registros para {season}")
-            logger.info(f"   Colunas: {len(df.columns)}")
-            logger.info(f"   Período: {df.get('GAME_DATE', pd.Series()).min() if 'GAME_DATE' in df.columns else 'N/A'} a {df.get('GAME_DATE', pd.Series()).max() if 'GAME_DATE' in df.columns else 'N/A'}")
-
-            return df
+            if len(df) > 0:
+                print(f"  ✅ Coletados {len(df):,} registros únicos para {season}")
+                all_dfs.append(df)
+            else:
+                print(f"  ⚠️ Nenhum registro encontrado para {season}")
 
         except Exception as e:
-            logger.error(f"❌ Erro ao coletar dados: {str(e)[:100]}")
-            return None
+            print(f"  ❌ Erro: {e}")
 
-    def save_to_csv(self, df: pd.DataFrame, filename: str) -> bool:
-        """
-        Salva dados em CSV.
+        if i < len(seasons):
+            time.sleep(SLEEP_SECONDS)
 
-        Args:
-            df: DataFrame para salvar
-            filename: Nome do arquivo
-
-        Returns:
-            True se salvo com sucesso
-        """
-        try:
-            filepath = os.path.join("data", filename)
-            os.makedirs("data", exist_ok=True)
-
-            df.to_csv(filepath, index=False, encoding="utf-8")
-
-            size_kb = os.path.getsize(filepath) / 1024
-            logger.info(f"💾 Salvo: {filename} ({size_kb:.1f} KB, {len(df)} linhas)")
-
-            return True
-
-        except Exception as e:
-            logger.error(f"❌ Erro ao salvar {filename}: {str(e)}")
-            return False
-
-    def get_summary(self, df: pd.DataFrame) -> None:
-        """Exibe resumo dos dados."""
-        if df is None or df.empty:
-            logger.warning("⚠️  Nenhum dado para resumir")
-            return
-
-        logger.info("\n" + "=" * 70)
-        logger.info("📊 RESUMO DOS DADOS")
-        logger.info("=" * 70)
-
-        logger.info(f"  📌 Total de linhas: {len(df)}")
-        logger.info(f"  📋 Total de colunas: {len(df.columns)}")
-
-        if "PLAYER_ID" in df.columns:
-            logger.info(f"  👥 Jogadores únicos: {df['PLAYER_ID'].nunique()}")
-
-        if "GAME_ID" in df.columns:
-            logger.info(f"  🎮 Jogos únicos: {df['GAME_ID'].nunique()}")
-
-        if "GAME_DATE" in df.columns:
-            dates = pd.to_datetime(df["GAME_DATE"], errors="coerce")
-            logger.info(f"  📅 Período: {dates.min()} a {dates.max()}")
-
-        if "PTS" in df.columns:
-            pts_mean = df["PTS"].mean()
-            pts_std = df["PTS"].std()
-            logger.info(f"  📈 Pontos: {pts_mean:.1f} ± {pts_std:.1f}")
-
-        logger.info("=" * 70 + "\n")
-
-
-def main() -> None:
-    """Função principal."""
-    collector = BoxscoresCollector()
-
-    season = "2025-26"
-    season_type = "Regular Season"
-
-    logger.info("\n" + "🚀 " * 20)
-    logger.info("COLETA DE BOXSCORES")
-    logger.info("🚀 " * 20 + "\n")
-
-    # Coleta dados
-    df = collector.get_player_stats_by_game(season, season_type)
-
-    if df is not None and not df.empty:
-        # Exibe resumo
-        collector.get_summary(df)
-
-        # Salva em CSV
-        collector.save_to_csv(df, f"nba_boxscores_{season}.csv")
-
-        logger.info("✅ Coleta concluída com sucesso!")
+    # Concatena todos os DataFrames
+    if all_dfs:
+        df_final = pd.concat(all_dfs, ignore_index=True)
+        print("\n" + "=" * 60)
+        print("✅ COLETA CONCLUÍDA!")
+        print(f"Total de registros coletados: {len(df_final):,}")
+        print("=" * 60)
+        return df_final
     else:
-        logger.warning("⚠️  Nenhum dado foi coletado")
+        print("\n⚠️ Nenhum dado foi coletado.")
+        return pd.DataFrame()
 
+
+# ===============================
+# Execução
+# ===============================
 
 if __name__ == "__main__":
-    main()
+    seasons = ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
+
+    # Opção 1: Apenas verificar
+    # Opção 2: Verificar e coletar
+    # Opção 3: Coletar diretamente
+
+    print("Opção 1: Verificar dados disponíveis")
+    print("Opção 2: Verificar e coletar")
+    print("Opção 3: Coletar diretamente (sem verificação)")
+
+    opcao = input("\nEscolha uma opção (1/2/3): ").strip()
+
+    if opcao == "1":
+        # Apenas verifica
+        check_all_seasons(seasons)
+
+    elif opcao == "2":
+        # Verifica e coleta
+        df_all = collect_multiple_seasons(seasons, check_first=True)
+        if len(df_all) > 0:
+            filename = "../NBA/data/nba_player_boxscores_multi_season.csv"
+            df_all.to_csv(filename, index=False)
+            print(f"\n✅ Arquivo salvo em: {filename}")
+            print("📊 Primeiras 5 linhas:")
+            print(df_all.head())
+
+    elif opcao == "3":
+        # Coleta direta
+        df_all = collect_multiple_seasons(seasons, check_first=False)
+        if len(df_all) > 0:
+            filename = "../NBA/data/nba_player_boxscores_multi_season.csv"
+            df_all.to_csv(filename, index=False)
+            print(f"\n✅ Arquivo salvo em: {filename}")
+    else:
+        print("Opção inválida!")
