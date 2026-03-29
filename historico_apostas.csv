@@ -1,14 +1,4 @@
-Data,Jogador,Time,Linha,Odd,EV+%,Vitória%,Valor Aposta,Tipo,Resultado,Lucro/Prejuízo,Deletar
-2026-03-28 12:25:38,Stephon Castle,SAS,16.5,1.89,25.13,66.21,R$ 100.00,Over,-,-,False
-2026-03-28 12:27:30,De'Aaron Fox,SAS,15.5,1.86,77.43,95.39,R$ 100.00,Over,-,-,False
-2026-03-28 12:31:19,Rudy Gobert,MIN,12.5,1.90,66.61,87.69,R$ 100.00,Over,-,-,False
-2026-03-28 12:32:10,VJ Edgecombe,PHI,15.5,2.00,29.80,64.90,R$ 100.00,Over,-,-,False
-2026-03-28 12:33:12,Paul George,PHI,15.5,1.90,78.49,93.94,R$ 100.00,Over,-,-,False
-2026-03-28 12:34:00,LaMelo Ball,CHA,19.5,1.89,29.43,68.48,R$ 100.00,Over,-,-,False
-2026-03-28 12:34:27,Miles Bridges,CHA,14.5,1.80,44.32,80.18,R$ 100.00,Over,-,-,False
-2026-03-28 12:35:16,Brandon Miller,CHA,17.5,1.80,31.78,73.21,R$ 100.00,Over,-,-,False
-2026-03-28 12:35:52,Coby White,CHA,15.5,1.95,13.04,57.97,R$ 100.00,Over,-,-,False
-2026-03-28 12:42:09,Zaccharie Risacher,ATL,7.5,1.89,59.10,84.18,R$ 100.00,Over,-,-,False
-2026-03-28 12:50:33,Josh Giddey,CHI,18.5,1.95,24.83,64.02,R$ 100.00,Over,-,-,False
-2026-03-28 12:51:40,Cedric Coward,MEM,12.5,1.90,42.74,75.12,R$ 100.00,Over,-,-,False
-2026-03-28 12:56:43,Royce O'Neale,PHX,9.5,2.10,77.57,84.56,R$ 100.00,Over,-,-,False
+Data,Jogador,Time,Linha,Odd,Pts(Real),EV+%,Vitória%,Valor Aposta,Tipo,Resultado,Lucro/Prejuízo,Deletar
+2026-03-28 18:52:42,Joel Embiid,PHI,26.5,1.89,29.0,89.00,100.00,R$ 100.00,Over,Green,R$ 89.00,False
+2026-03-28 18:54:23,Paul George,PHI,15.5,1.95,26.0,95.00,100.00,R$ 100.00,Over,Green,R$ 95.00,False
+2026-03-28 18:55:28,Sion James,CHA,4.5,1.86,2.0,85.86,99.93,R$ 100.00,Over,Red,R$ -100.00,False

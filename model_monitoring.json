@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2026-03-28T20:23:10.151730",
+    "player": "Stephon Castle",
+    "actual": 22.0,
+    "predicted": 16.5,
+    "error": 5.5,
+    "confidence": 0.85,
+    "is_accurate": false
+  }
+]
