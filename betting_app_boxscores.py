@@ -105,7 +105,7 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "nba_player_boxscore
 
 def load_bets_csv():
     """Carrega histórico de apostas do CSV"""
-    bets_file = "historico_apostas.csv"
+    bets_file = "data/historico_apostas.csv"
     if os.path.exists(bets_file):
         try:
             bets_df = pd.read_csv(bets_file)
@@ -728,7 +728,7 @@ with tab_bets:
                         st.warning(f"Erro ao registrar predição: {e}")
 
             edited_bets_df = format_bets_df(edited_bets_df)
-            edited_bets_df.to_csv("historico_apostas.csv", index=False, encoding="utf-8")
+            edited_bets_df.to_csv("data/historico_apostas.csv", index=False, encoding="utf-8")
             bets_df = edited_bets_df
             st.rerun()
 
