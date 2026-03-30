@@ -362,8 +362,13 @@ class NBAPointsPredictorBoxscoresV2:
                 "ev_plus_pct": 0.0,
                 "signal": "⚠️ Inválido",
                 "recommendation": "Verificar odds/linha",
-                "probability": 0.0,
+                "model_probability": 0.0,
                 "expected_value": 0.0,
+                "predicted_points": predicted_points,
+                "line": market_line,
+                "market_odds": market_odds,
+                "kelly_criterion": 0.0,
+                "implied_probability": 0.0,
             }
 
         # Estimar probabilidade com base na diferença entre previsão e linha
@@ -406,12 +411,25 @@ class NBAPointsPredictorBoxscoresV2:
             signal = "🔴 CRÍTICO"
             recommendation = "NÃO APOSTAR"
 
+        # Calcular Kelly Criterion: f = (bp - q) / b onde b=odds-1, p=win_prob, q=1-p
+        b = market_odds - 1.0
+        q = 1.0 - win_probability
+        kelly_criterion = (b * win_probability - q) / b if b > 0 else 0.0
+
+        # Probabilidade implícita nas odds
+        implied_probability = 1.0 / market_odds
+
         return {
             "ev_plus_pct": ev_plus_pct,
             "signal": signal,
             "recommendation": recommendation,
             "model_probability": win_probability,
             "expected_value": expected_value,
+            "predicted_points": predicted_points,
+            "line": market_line,
+            "market_odds": market_odds,
+            "kelly_criterion": kelly_criterion,
+            "implied_probability": implied_probability,
         }
 
     def get_player_comparison(self, player_name: str, n: int = 10) -> pd.DataFrame:
