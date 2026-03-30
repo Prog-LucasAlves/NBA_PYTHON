@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from nba_injury_scraper import NBAInjuryScraper
-from nba_prediction_model import NBAPointsPredictor
+from nba_prediction_model_boxscores_v2 import NBAPointsPredictorBoxscoresV2
 from overfitting_monitor import OverfittingMonitor
 
 warnings.filterwarnings("ignore")
@@ -203,10 +203,10 @@ def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_p
 
 @st.cache_resource
 def load_predictor():
-    """Carrega ou treina o modelo de previsão"""
-    data_path = os.path.join(os.path.dirname(__file__), "data", "nba_player_stats_multi_season.csv")
+    """Carrega ou treina o modelo de previsão (V2 - sem data leakage)"""
+    data_path = os.path.join(os.path.dirname(__file__), "data", "nba_player_boxscores_multi_season.csv")
     try:
-        predictor = NBAPointsPredictor(data_path)
+        predictor = NBAPointsPredictorBoxscoresV2(data_path)
         predictor.train()
         return predictor
     except Exception as e:

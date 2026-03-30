@@ -8,7 +8,7 @@ VERSÃO 2: CORRIGIDA - SEM DATA LEAKAGE
 """
 
 import warnings
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -25,10 +25,10 @@ class NBAPointsPredictorBoxscoresV2:
         self.model: Optional[Ridge] = None
         self.scaler = StandardScaler()
         self.feature_cols: List[str] = []
-        self.model_stats: Dict[str, float] = {}
+        self.model_stats: Dict[str, Union[float, str, int]] = {}
         self.player_averages: Dict[str, Dict] = {}
-        self.X_scaled = None
-        self.y = None
+        self.X_scaled: Optional[Any] = None
+        self.y: Optional[Any] = None
         self.cutoff_date: Optional[pd.Timestamp] = None
 
         if data_path:
@@ -221,7 +221,7 @@ class NBAPointsPredictorBoxscoresV2:
 
         # Scale features
         self.X_scaled = self.scaler.fit_transform(X)
-        self.y = y.values
+        self.y = y.values  # type: ignore
 
         # Treinar modelo
         self.model = Ridge(alpha=alpha, random_state=42)
@@ -229,9 +229,23 @@ class NBAPointsPredictorBoxscoresV2:
 
         # Calcular estatísticas
         y_pred = self.model.predict(self.X_scaled)
-        residuals = self.y - y_pred
+        residuals = self.y - y_pred  # type: ignore
 
-        self.model_stats = {"r2": float(1 - (np.sum(residuals**2) / np.sum((self.y - self.y.mean()) ** 2))), "mae": float(np.mean(np.abs(residuals))), "rmse": float(np.sqrt(np.mean(residuals**2))), "std_error": float(np.std(residuals)), "train_samples": len(train_df), "cutoff_date": str(test_date), "alpha": alpha}
+        y_mean = float(np.mean(self.y))  # type: ignore
+        r2 = float(1 - (np.sum(residuals**2) / np.sum((self.y - y_mean) ** 2)))  # type: ignore
+        mae = float(np.mean(np.abs(residuals)))
+        rmse = float(np.sqrt(np.mean(residuals**2)))
+        std_error = float(np.std(residuals))
+
+        self.model_stats = {  # type: ignore[assignment]
+            "r2": r2,
+            "mae": mae,
+            "rmse": rmse,
+            "std_error": std_error,
+            "train_samples": int(len(train_df)),
+            "cutoff_date": str(test_date),
+            "alpha": float(alpha),
+        }
 
         print("\nModelo Treinado (Versao 2 - SEM LEAKAGE)")
         print(f"   Samples: {self.model_stats['train_samples']}")
@@ -249,6 +263,8 @@ class NBAPointsPredictorBoxscoresV2:
         """
         if self.model is None:
             raise ValueError("Modelo não treinado. Chame train() primeiro.")
+        if self.df is None:
+            raise ValueError("Dados não carregados. Chame load_data() primeiro.")
 
         # Pegar últimos dados do jogador (até cutoff_date)
         if self.cutoff_date:
@@ -258,21 +274,6 @@ class NBAPointsPredictorBoxscoresV2:
 
         if len(player_data) == 0:
             return {"player_name": player_name, "predicted_points": 10.0, "std_error": self.model_stats.get("std_error", 4.0), "trend": "Unknown", "trend_pct": 0.0, "minutes_used": minutes, "games_played": 0, "model_r2": self.model_stats.get("r2", 0.0), "model_mae": self.model_stats.get("mae", 4.0), "confidence": 0.3}
-
-        # Usar última linha (mais recente)
-        if len(player_data) == 0:
-            return {
-                "player_name": player_name,
-                "predicted_points": 10.0,
-                "std_error": float(self.model_stats.get("std_error", 4.0)),
-                "trend": "Unknown",
-                "trend_pct": 0.0,
-                "minutes_used": minutes,
-                "games_played": 0,
-                "model_r2": float(self.model_stats.get("r2", 0.0)),
-                "model_mae": float(self.model_stats.get("mae", 4.0)),
-                "confidence": 0.3,
-            }
 
         last_game = player_data.iloc[-1]
 
@@ -316,7 +317,7 @@ class NBAPointsPredictorBoxscoresV2:
 
     def get_top_picks(self, n: int = 5, ev_threshold: float = 1.05) -> pd.DataFrame:
         """Retorna top N picks com melhor EV"""
-        if self.model is None:
+        if self.model is None or self.df is None:
             return pd.DataFrame()
 
         picks = []
