@@ -252,10 +252,21 @@ class NBAPointsPredictorBoxscoresV2:
         if self.df is not None:
             for player_name in self.df["PLAYER_NAME"].unique():
                 player_data = self.df[self.df["PLAYER_NAME"] == player_name]
+                # Tentar extrair team (time)
+                team = player_data["TEAM_ABBREVIATION"].iloc[0] if "TEAM_ABBREVIATION" in player_data.columns and len(player_data) > 0 else "Unknown"
+                # Tentar extrair posição (podem não estar no dataset)
+                position = player_data.get("POSITION", pd.Series(["SG"])).iloc[0] if "POSITION" in player_data.columns and len(player_data) > 0 else "SG"
+                # Obter última temporada
+                last_season = str(player_data["SEASON"].iloc[-1]) if "SEASON" in player_data.columns and len(player_data) > 0 else "Unknown"
+
                 self.player_averages[player_name] = {
                     "avg_pts": float(player_data["PTS"].mean()),
                     "avg_min": float(player_data["MIN"].mean()),
                     "games_played": len(player_data),
+                    "team": team,
+                    "position": position,
+                    "last_season": last_season,
+                    "seasons": len(player_data["SEASON"].unique()) if "SEASON" in player_data.columns else 1,
                 }
 
         print("\nModelo Treinado (Versao 2 - SEM LEAKAGE)")
@@ -324,6 +335,8 @@ class NBAPointsPredictorBoxscoresV2:
             "model_r2": self.model_stats.get("r2", 0.0),
             "model_mae": self.model_stats.get("mae", 4.0),
             "confidence": confidence,
+            "recent_avg": float(recent_avg),
+            "historical_avg": float(overall_avg),
         }
 
     def get_top_picks(self, n: int = 5, ev_threshold: float = 1.05) -> pd.DataFrame:
@@ -338,3 +351,95 @@ class NBAPointsPredictorBoxscoresV2:
 
         df_picks = pd.DataFrame(picks)
         return df_picks.sort_values("Confidence", ascending=False).head(n)
+
+    def calculate_ev_plus(self, predicted_points: float, market_odds: float, market_line: float) -> Dict:
+        """
+        Calcula o Expected Value (EV+) de uma aposta
+        EV+ = (Prob. Vitória * Odds) - 1
+        """
+        if market_odds <= 0 or market_line <= 0:
+            return {
+                "ev_plus_pct": 0.0,
+                "signal": "⚠️ Inválido",
+                "recommendation": "Verificar odds/linha",
+                "probability": 0.0,
+                "expected_value": 0.0,
+            }
+
+        # Estimar probabilidade com base na diferença entre previsão e linha
+        diff = predicted_points - market_line
+        # Usar distribuição normal (Z-score) para converter diferença em probabilidade
+        # std_error do modelo é usado como desvio padrão
+        std_error_val = self.model_stats.get("std_error", 3.0)
+        std_error = float(std_error_val) if isinstance(std_error_val, (int, float)) else 3.0
+
+        if std_error > 0:
+            # Probabilidade = P(X > market_line) onde X ~ N(predicted_points, std_error²)
+            from scipy import stats as sp_stats
+
+            try:
+                win_probability = float(1 - sp_stats.norm.cdf(market_line, loc=predicted_points, scale=std_error))
+            except:
+                # Fallback: usar diferença simples
+                win_probability = 0.5 + min(0.45, abs(diff) / (2 * std_error))
+        else:
+            win_probability = 0.5 if diff > 0 else 0.5
+
+        # Calcular EV+
+        expected_value = (win_probability * market_odds) - 1.0
+        ev_plus_pct = expected_value * 100
+
+        # Sinal e recomendação
+        if ev_plus_pct > 10:
+            signal = "🟢 FORTE"
+            recommendation = "APOSTAR - Valor excelente"
+        elif ev_plus_pct > 5:
+            signal = "🟢 BOM"
+            recommendation = "APOSTAR - Valor positivo"
+        elif ev_plus_pct > 0:
+            signal = "🟡 POSITIVO"
+            recommendation = "Apostar com moderação"
+        elif ev_plus_pct > -5:
+            signal = "🔴 NEGATIVO"
+            recommendation = "Evitar ou pequeno stake"
+        else:
+            signal = "🔴 CRÍTICO"
+            recommendation = "NÃO APOSTAR"
+
+        return {
+            "ev_plus_pct": ev_plus_pct,
+            "signal": signal,
+            "recommendation": recommendation,
+            "model_probability": win_probability,
+            "expected_value": expected_value,
+        }
+
+    def get_player_comparison(self, player_name: str, n: int = 10) -> pd.DataFrame:
+        """
+        Retorna comparação com jogadores similares (mesma posição)
+        Ordena por PPG (Points Per Game)
+        """
+        if self.df is None or player_name not in self.player_averages:
+            return pd.DataFrame()
+
+        # Se posição é desconhecida, retornar players top N por PPG
+        comparison_list = []
+        for pname, stats in self.player_averages.items():
+            if pname != player_name:
+                comparison_list.append(
+                    {
+                        "Player": pname,
+                        "Avg PTS": stats.get("avg_pts", 0),
+                        "Avg MIN": stats.get("avg_min", 0),
+                        "Team": stats.get("team", "Unknown"),
+                        "Position": stats.get("position", "Unknown"),
+                    },
+                )
+
+        if not comparison_list:
+            return pd.DataFrame()
+
+        df_comparison = pd.DataFrame(comparison_list)
+        # Sort by Avg PTS (descending) and limit to top N
+        df_comparison = df_comparison.sort_values("Avg PTS", ascending=False).head(n)
+        return df_comparison
