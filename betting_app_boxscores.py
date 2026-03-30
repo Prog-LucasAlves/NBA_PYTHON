@@ -449,7 +449,7 @@ with tab_predictor:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(label="Pontos Previstos", value=f"{prediction['predicted_points']}", delta=f"+/- {prediction['std_error']:.1f}")
+        st.metric(label="Pontos Previstos", value=f"{prediction['predicted_points']:.2f}", delta=f"+/- {prediction['std_error']:.1f}")
 
     with col2:
         st.metric(label="Tendência", value=prediction["trend"], delta=f"{prediction['trend_pct']:+.1f}% vs Histórico", delta_color="inverse")
