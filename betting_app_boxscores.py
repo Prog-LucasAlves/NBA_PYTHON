@@ -306,7 +306,10 @@ with col2:
     market_odds = st.number_input("Odds Decimais", min_value=1.0, max_value=10.0, value=1.95, step=0.01, help="Odds decimais (ex: 1.60, 1.61, 1.62)")
 
 # Minutos esperados
-expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=int(predictor.player_averages[selected_player]["avg_min"]), help="Minutos estimados que o jogador vai jogar")
+default_minutes = 30
+if selected_player in predictor.player_averages:
+    default_minutes = int(predictor.player_averages[selected_player]["avg_min"])
+expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=default_minutes, help="Minutos estimados que o jogador vai jogar")
 
 st.sidebar.divider()
 

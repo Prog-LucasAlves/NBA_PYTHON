@@ -247,6 +247,17 @@ class NBAPointsPredictorBoxscoresV2:
             "alpha": float(alpha),
         }
 
+        # Calcular médias por jogador para referência
+        self.player_averages = {}
+        if self.df is not None:
+            for player_name in self.df["PLAYER_NAME"].unique():
+                player_data = self.df[self.df["PLAYER_NAME"] == player_name]
+                self.player_averages[player_name] = {
+                    "avg_pts": float(player_data["PTS"].mean()),
+                    "avg_min": float(player_data["MIN"].mean()),
+                    "games_played": len(player_data),
+                }
+
         print("\nModelo Treinado (Versao 2 - SEM LEAKAGE)")
         print(f"   Samples: {self.model_stats['train_samples']}")
         print(f"   R2: {self.model_stats['r2']:.4f}")
