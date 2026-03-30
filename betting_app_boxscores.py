@@ -24,10 +24,10 @@ warnings.filterwarnings("ignore")
 def check_player_injury_status(player_name: str) -> dict:
     """Verifica se o jogador tem lesão registrada"""
     try:
-        if not os.path.exists("nba_players_status.csv"):
+        if not os.path.exists("data/nba_players_status.csv"):
             return {"status": "Disponível", "lesão": "", "aviso": False}
 
-        df_status = pd.read_csv("nba_players_status.csv")
+        df_status = pd.read_csv("data/nba_players_status.csv")
         player_data = df_status[df_status["Nome"].str.contains(player_name, case=False, na=False)]
 
         if len(player_data) == 0:
