@@ -235,7 +235,7 @@ class NBAInjuryScraper:
         """Dados de exemplo (quando scraping falha)"""
         return {"Stephen Curry": {"status": "Indisponível", "lesão": "Lesão no pé (Questionável)", "tipo": "Lesão no Pé", "timeline": "Questionável", "fonte": "SofaScore (Exemplo)"}}
 
-    def update_players_csv(self, csv_file: str = "nba_players_status.csv") -> pd.DataFrame:
+    def update_players_csv(self, csv_file: str = "data/nba_players_status.csv") -> pd.DataFrame:
         """
         Atualiza o CSV com informações de lesões em tempo real
         """
