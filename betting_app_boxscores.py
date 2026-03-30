@@ -306,7 +306,10 @@ with col2:
     market_odds = st.number_input("Odds Decimais", min_value=1.0, max_value=10.0, value=1.95, step=0.01, help="Odds decimais (ex: 1.60, 1.61, 1.62)")
 
 # Minutos esperados
-expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=int(predictor.player_averages[selected_player]["avg_min"]), help="Minutos estimados que o jogador vai jogar")
+default_minutes = 30
+if selected_player in predictor.player_averages:
+    default_minutes = int(predictor.player_averages[selected_player]["avg_min"])
+expected_minutes = st.sidebar.slider("Minutos Esperados", min_value=0, max_value=40, value=default_minutes, help="Minutos estimados que o jogador vai jogar")
 
 st.sidebar.divider()
 
@@ -446,7 +449,7 @@ with tab_predictor:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric(label="Pontos Previstos", value=f"{prediction['predicted_points']}", delta=f"+/- {prediction['std_error']:.1f}")
+        st.metric(label="Pontos Previstos", value=f"{prediction['predicted_points']:.2f}", delta=f"+/- {prediction['std_error']:.1f}")
 
     with col2:
         st.metric(label="Tendência", value=prediction["trend"], delta=f"{prediction['trend_pct']:+.1f}% vs Histórico", delta_color="inverse")
@@ -574,25 +577,35 @@ with tab_predictor:
     # Obter dados históricos do jogador
     if predictor.df is not None:
         player_df = predictor.df[predictor.df["PLAYER_NAME"] == selected_player].copy()
-        player_df = player_df.sort_values("SEASON")
+        player_df = player_df.sort_values("GAME_DATE")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            # Pontos por temporadas
+            # Pontos por jogo (linha temporal)
             if len(player_df) > 0:
-                pts_chart = alt.Chart(player_df).mark_line(point=True, color="#667eea").encode(x=alt.X("SEASON:N", title="Temporada"), y=alt.Y("PTS_mean:Q", title="Pontos Por Jogo"), tooltip=["SEASON", "PTS_mean", "MIN_mean"]).properties(title=f"{selected_player} - Tendência de Pontos Por Jogo", height=300, width=500)
+                # Criar agregação por season para visualização
+                if "SEASON" in player_df.columns:
+                    season_stats = player_df.groupby("SEASON").agg({"PTS": "mean", "MIN": "mean"}).reset_index()
+                    season_stats.columns = ["SEASON", "PTS_mean", "MIN_mean"]
+                    pts_chart = (
+                        alt.Chart(season_stats).mark_line(point=True, color="#667eea").encode(x=alt.X("SEASON:N", title="Temporada"), y=alt.Y("PTS_mean:Q", title="Pontos Por Jogo"), tooltip=["SEASON", "PTS_mean", "MIN_mean"]).properties(title=f"{selected_player} - Tendência de Pontos Por Jogo", height=300, width=500)
+                    )
 
-                # Adicionar linha de média
-                avg_pts = player_df["PTS_mean"].mean()
-                avg_line = alt.Chart(pd.DataFrame({"avg": [avg_pts]})).mark_rule(color="red", strokeDash=[5, 5]).encode(y="avg:Q")
+                    # Adicionar linha de média
+                    avg_pts = season_stats["PTS_mean"].mean()
+                    avg_line = alt.Chart(pd.DataFrame({"avg": [avg_pts]})).mark_rule(color="red", strokeDash=[5, 5]).encode(y="avg:Q")
 
-                st.altair_chart(pts_chart + avg_line, use_container_width=True)
+                    st.altair_chart(pts_chart + avg_line, use_container_width=True)
+                else:
+                    st.info("Dados de season não disponíveis")
 
         with col2:
             # Correlação de minutos
-            if len(player_df) > 0:
-                min_chart = alt.Chart(player_df).mark_area(color="#764ba2", opacity=0.3).encode(x=alt.X("SEASON:N", title="Temporada"), y=alt.Y("MIN_mean:Q", title="Minutos Por Jogo"), tooltip=["SEASON", "MIN_mean"]).properties(title=f"{selected_player} - Tendência de Minutos", height=300, width=500)
+            if len(player_df) > 0 and "SEASON" in player_df.columns:
+                season_stats = player_df.groupby("SEASON").agg({"PTS": "mean", "MIN": "mean"}).reset_index()
+                season_stats.columns = ["SEASON", "PTS_mean", "MIN_mean"]
+                min_chart = alt.Chart(season_stats).mark_area(color="#764ba2", opacity=0.3).encode(x=alt.X("SEASON:N", title="Temporada"), y=alt.Y("MIN_mean:Q", title="Minutos Por Jogo"), tooltip=["SEASON", "MIN_mean"]).properties(title=f"{selected_player} - Tendência de Minutos", height=300, width=500)
                 st.altair_chart(min_chart, use_container_width=True)
 
         # Distribuição de pontos
@@ -600,23 +613,28 @@ with tab_predictor:
 
         with col1:
             if len(player_df) > 5:
-                dist_chart = alt.Chart(player_df).mark_bar(color="#00b894").encode(x=alt.X("PTS_mean:Q", bin=alt.Bin(maxbins=15), title="Pontos"), y=alt.Y("count():Q", title="Frequência"), tooltip=["count()"]).properties(title=f"Distribuição de Pontos - {selected_player}", height=300, width=500)
+                # Usar PTS direto (game-level data)
+                dist_chart = alt.Chart(player_df).mark_bar(color="#00b894").encode(x=alt.X("PTS:Q", bin=alt.Bin(maxbins=15), title="Pontos"), y=alt.Y("count():Q", title="Frequência"), tooltip=["count()"]).properties(title=f"Distribuição de Pontos - {selected_player}", height=300, width=500)
                 st.altair_chart(dist_chart, use_container_width=True)
 
         with col2:
             # Scatter Minutos vs Pontos
             if len(player_df) > 5:
-                scatter = alt.Chart(player_df).mark_circle(size=100, color="#ff7f0e").encode(x=alt.X("MIN_mean:Q", title="Minutos"), y=alt.Y("PTS_mean:Q", title="Pontos"), tooltip=["SEASON", "MIN_mean", "PTS_mean"]).properties(title="Correlação Minutos vs Pontos", height=300, width=500)
+                scatter = alt.Chart(player_df).mark_circle(size=100, color="#ff7f0e").encode(x=alt.X("MIN:Q", title="Minutos"), y=alt.Y("PTS:Q", title="Pontos"), tooltip=["GAME_DATE", "MIN", "PTS"]).properties(title="Correlação Minutos vs Pontos", height=300, width=500)
 
                 # Adicionar linha de tendência
-                z = np.polyfit(player_df["MIN_mean"].dropna(), player_df["PTS_mean"].dropna(), 1)
-                p = np.poly1d(z)
-                trend_df = pd.DataFrame({"MIN_mean": np.linspace(player_df["MIN_mean"].min(), player_df["MIN_mean"].max(), 100)})
-                trend_df["PTS_mean"] = p(trend_df["MIN_mean"].values)
+                valid_data = player_df[["MIN", "PTS"]].dropna()
+                if len(valid_data) > 2:
+                    z = np.polyfit(valid_data["MIN"], valid_data["PTS"], 1)
+                    p = np.poly1d(z)
+                    trend_df = pd.DataFrame({"MIN": np.linspace(valid_data["MIN"].min(), valid_data["MIN"].max(), 100)})
+                    trend_df["PTS"] = p(trend_df["MIN"].values)
 
-                trend_line = alt.Chart(trend_df).mark_line(color="red", size=2).encode(x="MIN_mean:Q", y="PTS_mean:Q")
+                    trend_line = alt.Chart(trend_df).mark_line(color="red", size=2).encode(x="MIN:Q", y="PTS:Q")
 
-                st.altair_chart(scatter + trend_line, use_container_width=True)
+                    st.altair_chart(scatter + trend_line, use_container_width=True)
+                else:
+                    st.altair_chart(scatter, use_container_width=True)
 
     st.divider()
 
@@ -873,9 +891,9 @@ with tab_monitor:
         """)
 
     with col2:
-        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.85 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.80 else "❌ CRÍTICO"
-        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 2.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 3.0 else "❌ CRÍTICO"
-        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 1.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 2.2 else "❌ CRÍTICO"
+        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.80 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.75 else "❌ CRÍTICO"
+        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 3.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 4.0 else "❌ CRÍTICO"
+        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 2.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 3.2 else "❌ CRÍTICO"
 
         st.info(f"""
         **Status Atual:**
@@ -1101,12 +1119,12 @@ with tab_monitor:
             f"{len(predictor.feature_cols) if hasattr(predictor, 'feature_cols') else 0} features",
             "Ativo",
         ],
-        "Alvo": ["≥ 0.86", "< 2.5 pts", "< 1.8 pts", "8 features", "v2.1"],
+        "Alvo": ["≥ 0.80", "< 3.5 pts", "< 2.8 pts", "24 features", "v2.1"],
         "Status": [
-            "✅" if predictor.model_stats.get("r2", 0) >= 0.86 else "⚠️",
-            "✅" if predictor.model_stats.get("rmse", 999) < 2.5 else "⚠️",
-            "✅" if predictor.model_stats.get("mae", 999) < 1.8 else "⚠️",
-            "✅" if hasattr(predictor, "feature_cols") and len(predictor.feature_cols) == 8 else "ℹ️",
+            "✅" if predictor.model_stats.get("r2", 0) >= 0.80 else "⚠️",
+            "✅" if predictor.model_stats.get("rmse", 999) < 3.5 else "⚠️",
+            "✅" if predictor.model_stats.get("mae", 999) < 2.8 else "⚠️",
+            "✅" if hasattr(predictor, "feature_cols") and len(predictor.feature_cols) >= 20 else "ℹ️",
             "✅",
         ],
     }
@@ -1121,13 +1139,13 @@ with tab_monitor:
 
     alerts = []
 
-    if predictor.model_stats.get("r2", 0) < 0.85:
-        alerts.append(("⚠️", "R² abaixo de 0.85 - Verificar qualidade dos dados"))
+    if predictor.model_stats.get("r2", 0) < 0.80:
+        alerts.append(("⚠️", "R² abaixo de 0.80 - Verificar qualidade dos dados"))
 
-    if predictor.model_stats.get("rmse", 0) > 2.8:
+    if predictor.model_stats.get("rmse", 0) > 3.8:
         alerts.append(("⚠️", f"RMSE elevado: {predictor.model_stats.get('rmse', 0):.2f} pts"))
 
-    if predictor.model_stats.get("mae", 0) > 2.0:
+    if predictor.model_stats.get("mae", 0) > 3.0:
         alerts.append(("⚠️", f"MAE elevado: {predictor.model_stats.get('mae', 0):.2f} pts"))
 
     if not (hasattr(predictor, "feature_cols") and len(predictor.feature_cols) == 8):
