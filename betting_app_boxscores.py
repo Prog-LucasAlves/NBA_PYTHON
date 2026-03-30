@@ -15,7 +15,7 @@ import streamlit as st
 
 from automatic_model_monitor import AutomaticModelMonitor
 from nba_injury_scraper import NBAInjuryScraper
-from nba_prediction_model_boxscores import NBAPointsPredictorBoxscores
+from nba_prediction_model_boxscores_v2 import NBAPointsPredictorBoxscoresV2
 from overfitting_monitor import OverfittingMonitor
 
 warnings.filterwarnings("ignore")
@@ -174,7 +174,7 @@ def calculate_profit_loss(result, bet_amount, odds):
 
 def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_pct, bet_amount, bet_type):
     """Salva uma aposta no CSV"""
-    bets_file = "historico_apostas.csv"
+    bets_file = "data/historico_apostas.csv"
 
     bets_df = load_bets_csv()
 
@@ -212,7 +212,7 @@ def load_predictor():
     """Carrega ou treina o modelo de previsão (boxscores)"""
     data_path = DATA_PATH
     try:
-        predictor = NBAPointsPredictorBoxscores(data_path)
+        predictor = NBAPointsPredictorBoxscoresV2(data_path)
         predictor.train()
         return predictor
     except Exception as e:

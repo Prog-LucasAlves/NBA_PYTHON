@@ -7,5 +7,473 @@
     "error": 5.5,
     "confidence": 0.85,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-29T10:50:29.794954",
+    "player": "John Collins",
+    "actual": 16.08542713567839,
+    "predicted": 16.61,
+    "error": 0.524572864321609,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T10:51:16.022604",
+    "player": "Kris Dunn",
+    "actual": 7.075409836065574,
+    "predicted": 7.7,
+    "error": 0.6245901639344265,
+    "confidence": 0.999999999999996,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T10:52:05.344420",
+    "player": "Darius Garland",
+    "actual": 18.88809523809524,
+    "predicted": 18.66,
+    "error": 0.22809523809523924,
+    "confidence": 0.7139033999992057,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T10:53:47.016573",
+    "player": "Brook Lopez",
+    "actual": 12.402197802197803,
+    "predicted": 12.22,
+    "error": 0.1821978021978019,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T10:57:45.296930",
+    "player": "Kel'el Ware",
+    "actual": 10.25563909774436,
+    "predicted": 10.09,
+    "error": 0.1656390977443607,
+    "confidence": 0.9813648163349741,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T10:58:11.022602",
+    "player": "Andrew Wiggins",
+    "actual": 17.227699530516432,
+    "predicted": 17.38,
+    "error": 0.152300469483567,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:03:55.007594",
+    "player": "Wendell Carter Jr.",
+    "actual": 12.07843137254902,
+    "predicted": 12.09,
+    "error": 0.011568627450980529,
+    "confidence": 0.9813648163349741,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:05:56.752365",
+    "player": "Jakob Poeltl",
+    "actual": 10.852028639618139,
+    "predicted": 10.84,
+    "error": 0.012028639618138826,
+    "confidence": 0.8849792335976601,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:07:18.600910",
+    "player": "DeMar DeRozan",
+    "actual": 23.04527559055118,
+    "predicted": 22.88,
+    "error": 0.16527559055118246,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:13:11.088830",
+    "player": "Kevin Durant",
+    "actual": 27.468023255813954,
+    "predicted": 27.52,
+    "error": 0.05197674418604592,
+    "confidence": 0.9999999999995015,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:13:49.285109",
+    "player": "Tari Eason",
+    "actual": 10.31132075471698,
+    "predicted": 10.36,
+    "error": 0.0486792452830187,
+    "confidence": 0.9999999999741721,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:19:29.158276",
+    "player": "Herbert Jones",
+    "actual": 9.938356164383562,
+    "predicted": 10.05,
+    "error": 0.11164383561643909,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:20:39.251349",
+    "player": "Zion Williamson",
+    "actual": 23.96323529411765,
+    "predicted": 24.04,
+    "error": 0.07676470588235063,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:21:35.103928",
+    "player": "OG Anunoby",
+    "actual": 15.652068126520682,
+    "predicted": 15.63,
+    "error": 0.02206812652068102,
+    "confidence": 0.6768541330328781,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:22:07.154724",
+    "player": "Mikal Bridges",
+    "actual": 15.702554744525548,
+    "predicted": 15.53,
+    "error": 0.17255474452554864,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:23:07.304960",
+    "player": "Mitchell Robinson",
+    "actual": 7.5184049079754605,
+    "predicted": 7.15,
+    "error": 0.3684049079754601,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:23:48.479181",
+    "player": "Karl-Anthony Towns",
+    "actual": 23.225063938618927,
+    "predicted": 23.23,
+    "error": 0.004936061381073387,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:24:27.083899",
+    "player": "Luguentz Dort",
+    "actual": 11.679245283018869,
+    "predicted": 11.51,
+    "error": 0.16924528301886888,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:26:31.477971",
+    "player": "Jalen Williams",
+    "actual": 18.028688524590162,
+    "predicted": 18.09,
+    "error": 0.06131147540983761,
+    "confidence": 0.9999999900542705,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:27:14.970429",
+    "player": "Draymond Green",
+    "actual": 8.210268948655257,
+    "predicted": 8.3,
+    "error": 0.08973105134474402,
+    "confidence": 0.997629483752797,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:28:22.581972",
+    "player": "Kristaps Porzi\u0146\u0123is",
+    "actual": 20.435672514619885,
+    "predicted": 20.0,
+    "error": 0.43567251461988477,
+    "confidence": 0.9612245276641109,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:29:28.434147",
+    "player": "Tim Hardaway Jr.",
+    "actual": 14.266528925619834,
+    "predicted": 14.2,
+    "error": 0.06652892561983492,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:29:54.500850",
+    "player": "Cameron Johnson",
+    "actual": 12.796915167095115,
+    "predicted": 12.87,
+    "error": 0.07308483290488432,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:30:33.741429",
+    "player": "Nikola Joki\u0107",
+    "actual": 25.909274193548388,
+    "predicted": 25.85,
+    "error": 0.05927419354838648,
+    "confidence": 0.891687692978678,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:31:23.632452",
+    "player": "Peyton Watson",
+    "actual": 8.659192825112108,
+    "predicted": 8.04,
+    "error": 0.6191928251121084,
+    "confidence": 0.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:37:19.744094",
+    "player": "John Collins",
+    "actual": 16.08542713567839,
+    "predicted": 16.61,
+    "error": 0.524572864321609,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:38:57.942770",
+    "player": "Kris Dunn",
+    "actual": 7.075409836065574,
+    "predicted": 7.7,
+    "error": 0.6245901639344265,
+    "confidence": 0.999999999999996,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:39:51.522990",
+    "player": "Darius Garland",
+    "actual": 18.88809523809524,
+    "predicted": 18.66,
+    "error": 0.22809523809523924,
+    "confidence": 0.7139033999992057,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:40:47.494996",
+    "player": "Brook Lopez",
+    "actual": 12.402197802197803,
+    "predicted": 12.22,
+    "error": 0.1821978021978019,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:43:36.528965",
+    "player": "Kel'el Ware",
+    "actual": 10.25563909774436,
+    "predicted": 10.09,
+    "error": 0.1656390977443607,
+    "confidence": 0.9813648163349741,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:44:02.851631",
+    "player": "Andrew Wiggins",
+    "actual": 17.227699530516432,
+    "predicted": 17.38,
+    "error": 0.152300469483567,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:46:27.136514",
+    "player": "LaMelo Ball",
+    "actual": 20.75170068027211,
+    "predicted": 21.3,
+    "error": 0.5482993197278923,
+    "confidence": 0.997629483752797,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:46:59.388968",
+    "player": "Miles Bridges",
+    "actual": 17.514563106796118,
+    "predicted": 17.35,
+    "error": 0.1645631067961162,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:47:36.384420",
+    "player": "Kon Knueppel",
+    "actual": 19.13888888888889,
+    "predicted": 18.78,
+    "error": 0.35888888888888815,
+    "confidence": 0.9999968874374444,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:48:13.202443",
+    "player": "Coby White",
+    "actual": 15.41594827586207,
+    "predicted": 15.31,
+    "error": 0.1059482758620689,
+    "confidence": 0.9978779417683269,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:49:20.158187",
+    "player": "Wendell Carter Jr.",
+    "actual": 12.07843137254902,
+    "predicted": 12.09,
+    "error": 0.011568627450980529,
+    "confidence": 0.9813648163349741,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:50:38.035469",
+    "player": "Jakob Poeltl",
+    "actual": 10.852028639618139,
+    "predicted": 10.84,
+    "error": 0.012028639618138826,
+    "confidence": 0.8849792335976601,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:51:42.646350",
+    "player": "DeMar DeRozan",
+    "actual": 23.04527559055118,
+    "predicted": 22.88,
+    "error": 0.16527559055118246,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:55:51.839771",
+    "player": "Kevin Durant",
+    "actual": 27.468023255813954,
+    "predicted": 27.52,
+    "error": 0.05197674418604592,
+    "confidence": 0.9999999999995015,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:56:21.148464",
+    "player": "Tari Eason",
+    "actual": 10.31132075471698,
+    "predicted": 10.36,
+    "error": 0.0486792452830187,
+    "confidence": 0.9999999999741721,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:57:29.558528",
+    "player": "Herbert Jones",
+    "actual": 9.938356164383562,
+    "predicted": 10.05,
+    "error": 0.11164383561643909,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:58:11.488723",
+    "player": "Zion Williamson",
+    "actual": 23.96323529411765,
+    "predicted": 24.04,
+    "error": 0.07676470588235063,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:58:49.978605",
+    "player": "OG Anunoby",
+    "actual": 15.652068126520682,
+    "predicted": 15.63,
+    "error": 0.02206812652068102,
+    "confidence": 0.6768541330328781,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T11:59:13.635200",
+    "player": "Mikal Bridges",
+    "actual": 15.702554744525548,
+    "predicted": 15.53,
+    "error": 0.17255474452554864,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:00:04.013148",
+    "player": "Mitchell Robinson",
+    "actual": 7.5184049079754605,
+    "predicted": 7.15,
+    "error": 0.3684049079754601,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:00:33.662772",
+    "player": "Karl-Anthony Towns",
+    "actual": 23.225063938618927,
+    "predicted": 23.23,
+    "error": 0.004936061381073387,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:01:31.632010",
+    "player": "Jalen Williams",
+    "actual": 18.028688524590162,
+    "predicted": 18.09,
+    "error": 0.06131147540983761,
+    "confidence": 0.9999999900542705,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:02:08.533903",
+    "player": "Draymond Green",
+    "actual": 8.210268948655257,
+    "predicted": 8.3,
+    "error": 0.08973105134474402,
+    "confidence": 0.997629483752797,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:03:07.293842",
+    "player": "Kristaps Porzi\u0146\u0123is",
+    "actual": 20.435672514619885,
+    "predicted": 20.0,
+    "error": 0.43567251461988477,
+    "confidence": 0.9612245276641109,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:03:59.873964",
+    "player": "Tim Hardaway Jr.",
+    "actual": 14.266528925619834,
+    "predicted": 14.2,
+    "error": 0.06652892561983492,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:04:17.702417",
+    "player": "Cameron Johnson",
+    "actual": 12.796915167095115,
+    "predicted": 12.87,
+    "error": 0.07308483290488432,
+    "confidence": 1.0,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-29T12:04:49.353871",
+    "player": "Nikola Joki\u0107",
+    "actual": 25.909274193548388,
+    "predicted": 25.85,
+    "error": 0.05927419354838648,
+    "confidence": 0.891687692978678,
+    "is_accurate": true
   }
 ]
