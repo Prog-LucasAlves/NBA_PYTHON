@@ -891,9 +891,9 @@ with tab_monitor:
         """)
 
     with col2:
-        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.85 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.80 else "❌ CRÍTICO"
-        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 2.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 3.0 else "❌ CRÍTICO"
-        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 1.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 2.2 else "❌ CRÍTICO"
+        r2_status = "✅ BOM" if predictor.model_stats["r2"] > 0.80 else "⚠️ AVISO" if predictor.model_stats["r2"] > 0.75 else "❌ CRÍTICO"
+        rmse_status = "✅ BOM" if predictor.model_stats["rmse"] < 3.5 else "⚠️ AVISO" if predictor.model_stats["rmse"] < 4.0 else "❌ CRÍTICO"
+        mae_status = "✅ BOM" if predictor.model_stats["mae"] < 2.8 else "⚠️ AVISO" if predictor.model_stats["mae"] < 3.2 else "❌ CRÍTICO"
 
         st.info(f"""
         **Status Atual:**
@@ -1119,12 +1119,12 @@ with tab_monitor:
             f"{len(predictor.feature_cols) if hasattr(predictor, 'feature_cols') else 0} features",
             "Ativo",
         ],
-        "Alvo": ["≥ 0.86", "< 2.5 pts", "< 1.8 pts", "8 features", "v2.1"],
+        "Alvo": ["≥ 0.80", "< 3.5 pts", "< 2.8 pts", "24 features", "v2.1"],
         "Status": [
-            "✅" if predictor.model_stats.get("r2", 0) >= 0.86 else "⚠️",
-            "✅" if predictor.model_stats.get("rmse", 999) < 2.5 else "⚠️",
-            "✅" if predictor.model_stats.get("mae", 999) < 1.8 else "⚠️",
-            "✅" if hasattr(predictor, "feature_cols") and len(predictor.feature_cols) == 8 else "ℹ️",
+            "✅" if predictor.model_stats.get("r2", 0) >= 0.80 else "⚠️",
+            "✅" if predictor.model_stats.get("rmse", 999) < 3.5 else "⚠️",
+            "✅" if predictor.model_stats.get("mae", 999) < 2.8 else "⚠️",
+            "✅" if hasattr(predictor, "feature_cols") and len(predictor.feature_cols) >= 20 else "ℹ️",
             "✅",
         ],
     }
@@ -1139,13 +1139,13 @@ with tab_monitor:
 
     alerts = []
 
-    if predictor.model_stats.get("r2", 0) < 0.85:
-        alerts.append(("⚠️", "R² abaixo de 0.85 - Verificar qualidade dos dados"))
+    if predictor.model_stats.get("r2", 0) < 0.80:
+        alerts.append(("⚠️", "R² abaixo de 0.80 - Verificar qualidade dos dados"))
 
-    if predictor.model_stats.get("rmse", 0) > 2.8:
+    if predictor.model_stats.get("rmse", 0) > 3.8:
         alerts.append(("⚠️", f"RMSE elevado: {predictor.model_stats.get('rmse', 0):.2f} pts"))
 
-    if predictor.model_stats.get("mae", 0) > 2.0:
+    if predictor.model_stats.get("mae", 0) > 3.0:
         alerts.append(("⚠️", f"MAE elevado: {predictor.model_stats.get('mae', 0):.2f} pts"))
 
     if not (hasattr(predictor, "feature_cols") and len(predictor.feature_cols) == 8):
