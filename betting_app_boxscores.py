@@ -174,7 +174,7 @@ def calculate_profit_loss(result, bet_amount, odds):
 
 def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_pct, bet_amount, bet_type):
     """Salva uma aposta no CSV"""
-    bets_file = "historico_apostas.csv"
+    bets_file = "data/historico_apostas.csv"
 
     bets_df = load_bets_csv()
 
