@@ -997,7 +997,8 @@ with tab_monitor:
         bets_display["confidence"] = 0.85
         bets_display["is_accurate"] = bets_display["Resultado"].str.lower() == "green"
 
-        display_df = bets_display[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(15).copy()
+        display_limit = 25
+        display_df = bets_display[["timestamp", "player", "actual", "predicted", "error", "confidence", "is_accurate"]].sort_values("timestamp", ascending=False).head(display_limit).copy()
         display_df.columns = [
             "Data",
             "Jogador",
@@ -1016,7 +1017,7 @@ with tab_monitor:
 
         st.dataframe(display_df, use_container_width=True, hide_index=True)
 
-        st.success(f"✅ Mostrando **{len(display_df)}** predição(ões) com Pts(Real) registrado(s). Continue preenchendo Pts(Real) para suas apostas!")
+        st.success(f"✅ Mostrando as **{len(display_df)}** últimas predição(ões) com Pts(Real) registrado(s) de um total de **{total_predictions}**. Continue preenchendo Pts(Real) para suas apostas!")
     else:
         st.info("📝 Nenhuma predição com Pts(Real) preenchido ainda. \n\n**Como usar:**\n1. Faça uma previsão e registre uma aposta\n2. Ao final do jogo, preencha coluna 'Pts(Real)' no histórico de apostas\n3. A predição aparecerá aqui automaticamente")
 
