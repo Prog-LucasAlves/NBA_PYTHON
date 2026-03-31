@@ -4,9 +4,11 @@ Mesma estrutura e padrão visual do betting_app.py, mas usando dados de boxscore
 Arquivo: betting_app_boxscores.py
 """
 
+import json
 import os
 import warnings
 from datetime import datetime
+from typing import Any, cast
 
 import altair as alt
 import numpy as np
@@ -101,6 +103,7 @@ st.markdown(
 # ============================================================================
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "nba_player_boxscores_multi_season.csv")
+REVALIDATION_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "model_revalidation_history.json")
 
 
 def load_bets_csv():
@@ -202,6 +205,35 @@ def save_bet(player_name, team_name, market_line, odds, ev_plus_pct, model_win_p
     return len(bets_df)
 
 
+def load_revalidation_history() -> list[dict]:
+    """Carrega histórico de revalidações do modelo."""
+    if not os.path.exists(REVALIDATION_HISTORY_FILE):
+        return []
+
+    try:
+        with open(REVALIDATION_HISTORY_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def save_revalidation_history(history: list[dict]) -> None:
+    """Salva histórico de revalidações do modelo."""
+    try:
+        with open(REVALIDATION_HISTORY_FILE, "w", encoding="utf-8") as file:
+            json.dump(history[-20:], file, ensure_ascii=False, indent=2)
+    except Exception as e:
+        st.warning(f"Não foi possível salvar histórico de revalidação: {e}")
+
+
+def append_revalidation_result(result: dict) -> None:
+    """Adiciona um resultado de revalidação ao histórico persistido."""
+    history = load_revalidation_history()
+    history.append(result)
+    save_revalidation_history(history)
+
+
 # ============================================================================
 # CARREGAMENTO EM CACHE E DADOS
 # ============================================================================
@@ -282,6 +314,22 @@ st.sidebar.subheader("Seleção de Jogador")
 all_players = sorted(predictor.player_averages.keys())
 selected_player = st.sidebar.selectbox("Selecionar Jogador", options=all_players, help="Escolha um jogador da NBA para analisar")
 
+# Seleção de time baseada no CSV de boxscores
+available_teams = []
+if getattr(predictor, "df_raw", None) is not None and "TEAM_ABBREVIATION" in predictor.df_raw.columns:
+    available_teams = sorted(predictor.df_raw["TEAM_ABBREVIATION"].dropna().astype(str).str.strip().replace("", pd.NA).dropna().unique().tolist())
+
+default_team = predictor.player_averages.get(selected_player, {}).get("team", "")
+if default_team not in available_teams and available_teams:
+    default_team = available_teams[0]
+
+selected_team = st.sidebar.selectbox(
+    "Selecionar Time",
+    options=available_teams if available_teams else [default_team or "Unknown"],
+    index=(available_teams.index(default_team) if default_team in available_teams else 0) if (available_teams or default_team) else 0,
+    help="Escolha o time do jogador usando os times únicos do CSV de boxscores",
+)
+
 # ✅ VERIFICAR LESÕES
 injury_check: dict[str, object] = {"status": "Disponível", "lesão": "", "aviso": False}
 try:
@@ -347,6 +395,30 @@ if st.sidebar.button("🔬 Revalidar Modelo Agora", use_container_width=True, he
                 else:
                     status.update(label="⚠️ Modelo requer atenção", state="error")
                     st.warning("⚠️ Modelo apresenta degradação - considere retreinar")
+
+                previous_history = load_revalidation_history()
+                previous_result = previous_history[-1] if previous_history else None
+                comparison = {
+                    "timestamp": datetime.now().isoformat(),
+                    "r2_mean": float(result["r2_mean"]),
+                    "r2_std": float(result["r2_std"]),
+                    "rmse_mean": float(result["rmse_mean"]),
+                    "rmse_std": float(result["rmse_std"]),
+                    "is_valid": bool(result["is_valid"]),
+                }
+
+                if previous_result:
+                    previous_r2_mean = float(cast(Any, previous_result.get("r2_mean", 0)))
+                    previous_rmse_mean = float(cast(Any, previous_result.get("rmse_mean", 0)))
+                    comparison["previous_r2_mean"] = previous_r2_mean
+                    comparison["previous_rmse_mean"] = previous_rmse_mean
+                    current_r2_mean = float(cast(Any, comparison["r2_mean"]))
+                    current_rmse_mean = float(cast(Any, comparison["rmse_mean"]))
+                    comparison["delta_r2_mean"] = current_r2_mean - previous_r2_mean
+                    comparison["delta_rmse_mean"] = current_rmse_mean - previous_rmse_mean
+
+                append_revalidation_result(comparison)
+                st.sidebar.success("📌 Resultado salvo para comparação futura.")
             else:
                 status.update(label=f"❌ Erro: {result}", state="error")
                 st.error(f"Erro na validação: {result}")
@@ -523,7 +595,7 @@ with tab_predictor:
         # Salvar aposta
         num_bets = save_bet(
             player_name=selected_player,
-            team_name=predictor.player_averages[selected_player]["team"],
+            team_name=selected_team,
             market_line=market_line,
             odds=market_odds,
             ev_plus_pct=ev_analysis["ev_plus_pct"],
@@ -981,6 +1053,11 @@ with tab_monitor:
             status = "❌ CRÍTICO"
         st.metric(label="Status", value=status, delta_color="normal")
 
+    if total_predictions >= 500:
+        st.error(f"⚠️ O modelo já tem **{total_predictions} registros** com Pts(Real). É um bom momento para revalidar e comparar com a última rodada.")
+    elif total_predictions >= 450:
+        st.warning(f"⏳ Faltam poucos registros para o alerta automático. Atualmente são **{total_predictions}**; o aviso dispara em **500**.")
+
     st.divider()
 
     # Predições recentes
@@ -1146,6 +1223,25 @@ with tab_monitor:
 
     summary_df = pd.DataFrame(summary_data)
     st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+    revalidation_history = load_revalidation_history()
+    if revalidation_history:
+        st.subheader("🧾 Histórico de Revalidações")
+        history_rows = []
+        for item in revalidation_history[-5:][::-1]:
+            history_rows.append(
+                {
+                    "Data": pd.to_datetime(item.get("timestamp")).strftime("%d/%m %H:%M") if item.get("timestamp") else "-",
+                    "R² Médio": f"{float(item.get('r2_mean', 0)):.4f}",
+                    "RMSE Médio": f"{float(item.get('rmse_mean', 0)):.2f}",
+                    "Δ R²": f"{float(item.get('delta_r2_mean', 0)):+.4f}" if "delta_r2_mean" in item else "-",
+                    "Δ RMSE": f"{float(item.get('delta_rmse_mean', 0)):+.2f}" if "delta_rmse_mean" in item else "-",
+                    "Status": "✅" if item.get("is_valid") else "⚠️",
+                },
+            )
+
+        history_df = pd.DataFrame(history_rows)
+        st.dataframe(history_df, use_container_width=True, hide_index=True)
 
     st.divider()
 
