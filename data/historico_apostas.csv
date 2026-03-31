@@ -1,30 +1,26 @@
 Data,Jogador,Time,Linha,Odd,Pts(Real),EV+%,Vitória%,Valor Aposta,Tipo,Resultado,Lucro/Prejuízo,Deletar
-2026-03-28 18:52:42,Joel Embiid,PHI,26.5,1.89,29.0,89.00,100.00,R$ 100.00,Over,Green,R$ 89.00,False
-2026-03-28 18:54:23,Paul George,PHI,15.5,1.95,26.0,95.00,100.00,R$ 100.00,Over,Green,R$ 95.00,False
-2026-03-28 18:55:28,Sion James,CHA,4.5,1.86,2.0,85.86,99.93,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:37:19,John Collins,LAC,9.5,1.90,22.0,90.00,100.00,R$ 100.00,Over,Green,R$ 90.00,False
-2026-03-29 11:38:57,Kris Dunn,LAC,5.5,2.00,10.0,100.00,100.00,R$ 100.00,Over,Green,R$ 100.00,False
-2026-03-29 11:39:51,Darius Garland,LAC,18.5,1.80,15.0,28.50,71.39,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:40:47,Brook Lopez,LAC,9.5,1.89,8.0,89.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:43:36,Kel'el Ware,MIA,9.5,1.95,5.0,91.37,98.14,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:44:02,Andrew Wiggins,MIA,12.5,1.90,15.0,90.00,100.00,R$ 100.00,Over,Green,R$ 90.00,False
-2026-03-29 11:46:27,LaMelo Ball,CHA,20.5,2.05,19.0,104.51,99.76,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:46:59,Miles Bridges,CHA,14.5,1.86,14.0,86.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:47:36,Kon Knueppel,CHA,17.5,1.83,13.0,83.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:48:13,Coby White,CHA,14.5,1.86,11.0,85.61,99.79,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:49:20,Wendell Carter Jr.,ORL,11.5,1.90,4.0,86.46,98.14,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:50:38,Jakob Poeltl,TOR,10.5,1.89,11.0,67.26,88.50,R$ 100.00,Over,Green,R$ 89.00,False
-2026-03-29 11:55:51,Kevin Durant,HOU,25.5,2.00,20.0,100.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:56:21,Tari Eason,HOU,8.5,1.80,15.0,80.00,100.00,R$ 100.00,Over,Green,R$ 80.00,False
-2026-03-29 11:57:29,Herbert Jones,NOP,7.5,1.80,10.0,80.00,100.00,R$ 100.00,Over,Green,R$ 80.00,False
-2026-03-29 11:58:11,Zion Williamson,NOP,20.5,1.89,18.0,89.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:58:49,OG Anunoby,NYK,15.5,1.83,10.0,23.86,67.69,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 11:59:13,Mikal Bridges,NYK,12.5,1.89,15.0,89.00,100.00,R$ 100.00,Over,Green,R$ 89.00,False
-2026-03-29 12:00:04,Mitchell Robinson,NYK,4.5,1.90,3.0,90.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 12:00:33,Karl-Anthony Towns,NYK,17.5,1.83,15.0,83.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 12:01:31,Jalen Williams,OKC,16.5,1.83,22.0,83.00,100.00,R$ 100.00,Over,Green,R$ 83.00,False
-2026-03-29 12:02:08,Draymond Green,GSW,7.5,1.89,13.0,88.55,99.76,R$ 100.00,Over,Green,R$ 89.00,False
-2026-03-29 12:03:07,Kristaps Porziņģis,GSW,19.5,1.86,23.0,78.79,96.12,R$ 100.00,Over,Green,R$ 86.00,False
-2026-03-29 12:03:59,Tim Hardaway Jr.,DEN,10.5,1.86,16.0,86.00,100.00,R$ 100.00,Over,Green,R$ 86.00,False
-2026-03-29 12:04:17,Cameron Johnson,DEN,10.5,1.83,6.0,83.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
-2026-03-29 12:04:49,Nikola Jokić,DEN,25.5,1.89,25.0,68.53,89.17,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 09:00:37,VJ Edgecombe,PHI,13.5,1.83,13.0,82.67,99.82,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 09:02:04,Quentin Grimes,NYK,9.5,2.00,11.0,100.00,100.00,R$ 100.00,Over,Green,R$ 100.00,False
+2026-03-30 09:02:59,Bam Adebayo,MIA,21.5,1.89,23.0,88.89,99.94,R$ 100.00,Over,Green,R$ 89.00,False
+2026-03-30 09:03:22,Tyler Herro,MIA,22.5,1.95,30.0,73.86,89.16,R$ 100.00,Over,Green,R$ 95.00,False
+2026-03-30 09:03:56,Davion Mitchell,SAC,8.5,1.80,9.0,77.55,98.64,R$ 100.00,Over,Green,R$ 80.00,False
+2026-03-30 09:06:20,Payton Pritchard,BOS,17.5,1.95,16.0,37.24,70.38,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 09:07:18,Nickeil Alexander-Walker,NOP,16.5,1.80,17.0,44.24,80.13,R$ 100.00,Over,Green,R$ 80.00,False
+2026-03-30 09:08:10,CJ McCollum,POR,16.5,1.80,14.0,49.80,83.22,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 11:15:47,Tre Jones,SAS,13.5,1.83,23.0,69.51,92.63,R$ 100.00,Over,Green,R$ 83.00,False
+2026-03-30 11:16:59,Harrison Barnes,SAC,7.5,1.89,3.0,55.60,82.33,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 11:17:53,Julian Champagnie,PHI,9.5,1.86,13.0,55.80,83.76,R$ 100.00,Over,Green,R$ 86.00,False
+2026-03-30 11:18:50,Dylan Harper,SAS,12.5,1.80,13.0,68.13,93.41,R$ 100.00,Over,Green,R$ 80.00,False
+2026-03-30 11:19:36,Luke Kornet,CHI,5.5,1.83,10.0,25.02,68.32,R$ 100.00,Over,Green,R$ 83.00,False
+2026-03-30 11:21:57,Jalen Green,HOU,20.5,1.83,21.0,44.80,79.13,R$ 100.00,Over,Green,R$ 83.00,False
+2026-03-30 11:23:10,Cedric Coward,MEM,14.5,1.86,7.0,65.89,89.19,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 11:24:06,Donte DiVincenzo,MIL,13.5,1.90,15.0,62.44,85.49,R$ 100.00,Over,Green,R$ 90.00,False
+2026-03-30 11:24:46,Rudy Gobert,UTA,13.5,1.90,14.0,83.70,96.68,R$ 100.00,Over,Green,R$ 90.00,False
+2026-03-30 11:25:09,Julius Randle,NYK,20.5,1.89,24.0,36.76,72.36,R$ 100.00,Over,Green,R$ 89.00,False
+2026-03-30 11:28:52,Donovan Mitchell,UTA,26.5,1.89,34.0,52.70,80.80,R$ 100.00,Over,Green,R$ 89.00,False
+2026-03-30 11:29:35,Ace Bailey,UTA,18.5,1.90,19.0,89.82,99.90,R$ 100.00,Over,Green,R$ 90.00,False
+2026-03-30 11:30:01,Kyle Filipowski,UTA,13.5,1.86,20.0,79.10,96.29,R$ 100.00,Over,Green,R$ 86.00,False
+2026-03-30 11:30:37,Brice Sensabaugh,UTA,20.5,1.86,18.0,86.00,100.00,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-30 11:31:06,Cody Williams,UTA,13.5,1.90,26.0,89.71,99.85,R$ 100.00,Over,Green,R$ 90.00,False
+2026-03-30 12:07:34,Paul Reed,PHI,12.5,1.90,,75.90,92.58,R$ 100.00,Over,-,-,False
+2026-03-30 12:08:48,Shai Gilgeous-Alexander,OKC,29.5,1.89,,75.50,92.86,R$ 100.00,Over,-,-,False
