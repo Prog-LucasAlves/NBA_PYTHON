@@ -718,5 +718,23 @@
     "error": 6.51721438142323,
     "confidence": 0.9285706258156438,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T10:51:36.709002",
+    "player": "Jevon Carter",
+    "actual": 5.435406698564593,
+    "predicted": 15.945138838971669,
+    "error": 10.509732140407076,
+    "confidence": 0.9973523162393143,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:07:07.647661",
+    "player": "Jevon Carter",
+    "actual": 5.435406698564593,
+    "predicted": 15.945138838971669,
+    "error": 10.509732140407076,
+    "confidence": 0.9973523162393143,
+    "is_accurate": false
   }
 ]
