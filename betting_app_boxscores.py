@@ -764,9 +764,12 @@ with tab_bets:
         ).sum()
         accumulated_profit = profit_loss_series.sum()
         roi = (accumulated_profit / total_value * 100) if total_value else 0.0
-        average_odds = pd.to_numeric(bets_df["Odd"].astype(str).str.replace(",", "."), errors="coerce").mean()
+        odds_series = pd.to_numeric(bets_df["Odd"].astype(str).str.replace(",", "."), errors="coerce")
+        odds_series = odds_series.replace(0, np.nan)
+        average_odds = odds_series.mean() if odds_series.notna().any() else 0.0
+        average_odds_pct = (100 / odds_series).mean() if odds_series.notna().any() else 0.0
 
-        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             st.metric("Total de Apostas", len(bets_df))
@@ -780,16 +783,27 @@ with tab_bets:
             st.metric("Apostas RED", red_bets)
 
         with col4:
-            st.metric("Valor Total Apostado", f"R$ {total_value:.2f}")
+            hit_rate = ((green_bets / (green_bets + red_bets)) * 100) if (green_bets + red_bets) else 0.0
+            st.metric("Taxa de Acerto", f"{hit_rate:.2f}%")
+
+        st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
+
+        col5, col6, col7, col8, col9 = st.columns([1.3, 1, 0.8, 0.95, 0.95])
 
         with col5:
-            st.metric("Acumulado", f"R$ {accumulated_profit:.2f}")
+            st.metric("Valor Total Apostado", f"R$ {total_value:.2f}")
 
         with col6:
-            st.metric("ROI", f"{roi:.2f}%")
+            st.metric("Acumulado", f"R$ {accumulated_profit:.2f}")
 
         with col7:
+            st.metric("ROI", f"{roi:.2f}%")
+
+        with col8:
             st.metric("Odd Média", f"{average_odds:.2f}")
+
+        with col9:
+            st.metric("Odd Média (%)", f"{average_odds_pct:.2f}%")
 
         # Tabela de resumo por jogador
         st.divider()
