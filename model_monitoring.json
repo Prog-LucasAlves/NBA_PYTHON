@@ -736,5 +736,131 @@
     "error": 10.509732140407076,
     "confidence": 0.9973523162393143,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:22:29.241160",
+    "player": "LaMelo Ball",
+    "actual": 20.743243243243242,
+    "predicted": 23.269116578763825,
+    "error": 2.5258733355205827,
+    "confidence": 0.8670939561675961,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:24:16.552184",
+    "player": "Josh Green",
+    "actual": 6.359649122807017,
+    "predicted": 6.392187229497347,
+    "error": 0.03253810669033008,
+    "confidence": 0.8747411625934183,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-03-31T11:26:25.308298",
+    "player": "Drake Powell",
+    "actual": 6.280701754385965,
+    "predicted": 9.304233368809841,
+    "error": 3.0235316144238764,
+    "confidence": 0.7028672372727738,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:26:55.125357",
+    "player": "Ben Saraf",
+    "actual": 6.7105263157894735,
+    "predicted": 21.982704310204966,
+    "error": 15.272177994415493,
+    "confidence": 0.9996505956059,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:27:21.188233",
+    "player": "Nolan Traore",
+    "actual": 8.509803921568627,
+    "predicted": 15.868017593351828,
+    "error": 7.358213671783201,
+    "confidence": 0.9434944765028511,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:27:54.761848",
+    "player": "Ziaire Williams",
+    "actual": 8.681647940074907,
+    "predicted": 15.904832218290528,
+    "error": 7.223184278215621,
+    "confidence": 0.9032751370341835,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:32:20.697163",
+    "player": "Karl-Anthony Towns",
+    "actual": 23.20408163265306,
+    "predicted": 19.733878213585424,
+    "error": 3.470203419067637,
+    "confidence": 0.7452156057428034,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:33:23.467890",
+    "player": "Reed Sheppard",
+    "actual": 9.682539682539682,
+    "predicted": 15.579311343806904,
+    "error": 5.896771661267222,
+    "confidence": 0.7303514986879337,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:33:44.296706",
+    "player": "Jabari Smith Jr.",
+    "actual": 13.631205673758865,
+    "predicted": 16.620211098613243,
+    "error": 2.989005424854378,
+    "confidence": 0.7343265465684529,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:34:07.459132",
+    "player": "Amen Thompson",
+    "actual": 14.03448275862069,
+    "predicted": 19.958809729369513,
+    "error": 5.924326970748822,
+    "confidence": 0.9059762681362237,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:36:10.252488",
+    "player": "Daniss Jenkins",
+    "actual": 7.957746478873239,
+    "predicted": 18.358536118189257,
+    "error": 10.400789639316017,
+    "confidence": 0.8006450203274489,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:37:42.857281",
+    "player": "Donovan Mitchell",
+    "actual": 26.091517857142858,
+    "predicted": 29.449748097898702,
+    "error": 3.3582302407558444,
+    "confidence": 0.8782102899228204,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:38:38.008024",
+    "player": "Luka Don\u010di\u0107",
+    "actual": 30.547727272727272,
+    "predicted": 38.92437877451623,
+    "error": 8.376651501788956,
+    "confidence": 0.9710644728519154,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-03-31T11:39:22.122069",
+    "player": "Austin Reaves",
+    "actual": 15.810975609756097,
+    "predicted": 24.21906049392172,
+    "error": 8.408084884165623,
+    "confidence": 0.7889403628339665,
+    "is_accurate": false
   }
 ]
