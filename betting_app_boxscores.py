@@ -465,7 +465,7 @@ if st.sidebar.button("🔄 Atualizar Lista de Lesões", use_container_width=True
                 st.rerun()
             else:
                 status.update(label="⚠️ Falha ao atualizar CSV", state="error")
-                st.warning("Falha ao atualizar CSV de lesões")
+                st.warning("Falha ao atualizar CSV de lesões. Verifique se `data/nba_players_status.csv` tem a lista de jogadores ou se `data/nba_player_boxscores_multi_season.csv` está disponível.")
 
         except Exception as e:
             status.update(label="❌ Erro ao atualizar lesões", state="error")
