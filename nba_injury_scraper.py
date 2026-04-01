@@ -235,6 +235,43 @@ class NBAInjuryScraper:
         """Dados de exemplo (quando scraping falha)"""
         return {"Stephen Curry": {"status": "Indisponível", "lesão": "Lesão no pé (Questionável)", "tipo": "Lesão no Pé", "timeline": "Questionável", "fonte": "SofaScore (Exemplo)"}}
 
+    def _build_players_status_from_boxscores(
+        self,
+        source_csv: str = "data/nba_player_boxscores_multi_season.csv",
+    ) -> pd.DataFrame | None:
+        """Cria um CSV base de status a partir do dataset de boxscores."""
+        try:
+            boxscores_df = pd.read_csv(source_csv)
+            if boxscores_df.empty or "PLAYER_NAME" not in boxscores_df.columns:
+                print(f"⚠️ Fonte de jogadores inválida: {source_csv}")
+                return None
+
+            players_df = (
+                boxscores_df[["PLAYER_NAME", "TEAM_ABBREVIATION", "TEAM_NAME"]]
+                .dropna(subset=["PLAYER_NAME"])
+                .drop_duplicates(subset=["PLAYER_NAME"])
+                .sort_values("PLAYER_NAME")
+                .rename(
+                    columns={
+                        "PLAYER_NAME": "Nome",
+                        "TEAM_ABBREVIATION": "Time",
+                        "TEAM_NAME": "Time Completo",
+                    },
+                )
+            )
+
+            players_df["Posição"] = ""
+            players_df["Status"] = "Disponível"
+            players_df["Lesão"] = ""
+            players_df["Data Atualização"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+            players_df["Fonte"] = "Boxscores"
+            players_df = players_df[["Nome", "Time", "Posição", "Status", "Lesão", "Data Atualização", "Fonte"]]
+            print(f"✅ Roster base criado com {len(players_df)} jogadores a partir de {source_csv}")
+            return players_df
+        except Exception as e:
+            print(f"❌ Erro ao montar roster base: {e}")
+            return None
+
     def update_players_csv(self, csv_file: str = "data/nba_players_status.csv") -> pd.DataFrame:
         """
         Atualiza o CSV com informações de lesões em tempo real
@@ -248,10 +285,21 @@ class NBAInjuryScraper:
             df = pd.read_csv(csv_file)
             print(f"✓ CSV carregado: {len(df)} jogadores")
 
+            if df.empty:
+                print(f"⚠️ CSV vazio: {csv_file} não tem jogadores para atualizar")
+                df = self._build_players_status_from_boxscores()
+                if df is None or df.empty:
+                    return None
+                print("✅ CSV base recriado a partir dos boxscores")
+
             # Coletar lesões atuais
             injuries = self.get_injuries_data()
 
-            # Atualizar status dos jogadores
+            # Limpar a lista antiga antes de aplicar os novos dados
+            df["Status"] = "Disponível"
+            df["Lesão"] = ""
+
+            # Atualizar status dos jogadores com a lista mais recente
             updated = 0
             for player_name, injury_info in injuries.items():
                 # Procurar pelo jogador no DataFrame
