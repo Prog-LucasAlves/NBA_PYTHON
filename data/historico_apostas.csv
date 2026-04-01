@@ -24,4 +24,18 @@ Data,Jogador,Time,Linha,Odd,Pts(Real),EV+%,Vitória%,Valor Aposta,Tipo,Resultado
 2026-03-30 11:31:06,Cody Williams,UTA,13.5,1.90,26.0,89.71,99.85,R$ 100.00,Over,Green,R$ 90.00,False
 2026-03-30 12:07:34,Paul Reed,PHI,12.5,1.90,21.0,75.90,92.58,R$ 100.00,Over,Green,R$ 90.00,False
 2026-03-30 12:08:48,Shai Gilgeous-Alexander,OKC,29.5,1.89,47.0,75.50,92.86,R$ 100.00,Over,Green,R$ 89.00,False
-2026-03-31 11:07:07,Jevon Carter,ORL,6.5,1.80,,79.52,99.74,R$ 100.00,Over,-,-,False
+2026-03-31 11:07:07,Jevon Carter,ORL,6.5,1.80,0.0,79.52,99.74,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:22:29,LaMelo Ball,CHA,19.5,1.89,14.0,63.88,86.71,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:24:16,Josh Green,CHA,2.5,1.71,3.0,49.58,87.47,R$ 100.00,Over,Green,R$ 71.00,False
+2026-03-31 11:26:25,Drake Powell,BKN,7.5,1.76,10.0,23.70,70.29,R$ 100.00,Over,Green,R$ 76.00,False
+2026-03-31 11:26:55,Ben Saraf,BKN,10.5,1.95,7.0,94.93,99.97,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:27:21,Nolan Traore,BKN,10.5,1.80,10.0,69.83,94.35,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:27:54,Ziaire Williams,BKN,11.5,1.89,10.0,70.72,90.33,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:32:20,Karl-Anthony Towns,NYK,17.5,1.95,22.0,45.32,74.52,R$ 100.00,Over,Green,R$ 95.00,False
+2026-03-31 11:33:23,Reed Sheppard,HOU,13.5,1.83,20.0,33.65,73.04,R$ 100.00,Over,Green,R$ 83.00,False
+2026-03-31 11:33:44,Jabari Smith Jr.,HOU,14.5,1.83,15.0,34.38,73.43,R$ 100.00,Over,Green,R$ 83.00,False
+2026-03-31 11:34:07,Amen Thompson,HOU,15.5,2.00,17.0,81.20,90.60,R$ 100.00,Over,Green,R$ 100.00,False
+2026-03-31 11:36:10,Daniss Jenkins,DET,15.5,1.89,21.0,51.32,80.06,R$ 100.00,Over,Green,R$ 89.00,False
+2026-03-31 11:37:42,Donovan Mitchell,CLE,25.5,1.95,10.0,71.25,87.82,R$ 100.00,Over,Red,R$ -100.00,False
+2026-03-31 11:38:38,Luka Dončić,LAL,32.5,1.86,42.0,80.62,97.11,R$ 100.00,Over,Green,R$ 86.00,False
+2026-03-31 11:39:22,Austin Reaves,LAL,21.5,1.83,19.0,44.38,78.89,R$ 100.00,Over,Red,R$ -100.00,False
