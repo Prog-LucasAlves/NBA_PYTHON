@@ -1546,5 +1546,50 @@
     "error": 3.6999999999999993,
     "confidence": 0.87,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T16:34:34.907837",
+    "player": "Bam Adebayo",
+    "actual": 18.82831325301205,
+    "predicted": 32.09147884747945,
+    "error": 13.263165594467402,
+    "confidence": 0.99880759494829,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T16:35:15.662256",
+    "player": "Tyler Herro",
+    "actual": 17.977695167286246,
+    "predicted": 25.296045626626658,
+    "error": 7.318350459340412,
+    "confidence": 0.8618542675299059,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T16:36:54.721644",
+    "player": "Pelle Larsson",
+    "actual": 10.952380952380953,
+    "predicted": 16.593877830566317,
+    "error": 5.6414968781853645,
+    "confidence": 0.979048935727752,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T16:37:49.834825",
+    "player": "Davion Mitchell",
+    "actual": 8.600917431192661,
+    "predicted": 15.471594549987701,
+    "error": 6.87067711879504,
+    "confidence": 0.9772185673235166,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T16:44:26.615327",
+    "player": "Jalen Green",
+    "actual": 19.541666666666668,
+    "predicted": 23.234713314564793,
+    "error": 3.693046647898125,
+    "confidence": 0.9127512688151211,
+    "is_accurate": false
   }
 ]
