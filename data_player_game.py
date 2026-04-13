@@ -285,6 +285,9 @@ def collect_multiple_seasons(seasons: List[str], check_first: bool = True) -> pd
 # ===============================
 
 if __name__ == "__main__":
+    import sys
+
+    sys.stdout.reconfigure(encoding="utf-8")
     seasons = ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
 
     # Opção 1: Apenas verificar

@@ -147,47 +147,57 @@ class OverfittingMonitor:
 
 # Exemplo de uso
 if __name__ == "__main__":
-    from nba_prediction_model import NBAPointsPredictor
+    import sys
+
+    sys.stdout.reconfigure(encoding="utf-8")
+
+    from nba_prediction_model_boxscores_v2 import NBAPointsPredictorBoxscoresV2
 
     print("=" * 70)
     print("TESTE DO SISTEMA DE MONITORAMENTO DE OVERFITTING")
     print("=" * 70)
 
     # Carregar dados
-    predictor = NBAPointsPredictor("data/nba_player_stats_multi_season.csv")
-    X, y, _ = predictor.build_features()
-    X_scaled = predictor.scaler.fit_transform(X)
+    try:
+        predictor = NBAPointsPredictorBoxscoresV2("data/nba_player_boxscores_multi_season.csv")
+        predictor.train()
 
-    # Testar monitor
-    monitor = OverfittingMonitor()
+        # Testar monitor
+        monitor = OverfittingMonitor()
 
-    # Teste 1: Dados originais (deve passar)
-    print("\n[Teste 1/3] Dados originais...")
-    result1 = monitor.validate_new_data(X_scaled, y.values, predictor.scaler)
-    monitor.print_validation_report(result1)
+        # Obter dados de features
+        X = predictor.df[predictor.feature_cols].fillna(0).values
+        y = predictor.df["PTS"].values
 
-    # Teste 2: Subset aleatório (simular dados novos)
-    print("\n[Teste 2/3] Subset aleatório (simular novos dados)...")
-    indices = np.random.choice(len(y), size=int(len(y) * 0.7), replace=False)
-    X_subset = X_scaled[indices]
-    y_subset = y.iloc[indices].values
-    result2 = monitor.validate_new_data(X_subset, y_subset, predictor.scaler)
-    monitor.print_validation_report(result2)
+        # Teste 1: Dados originais (deve passar)
+        print("\n[Teste 1/3] Dados originais...")
+        result1 = monitor.validate_new_data(X, y, predictor.scaler)
+        monitor.print_validation_report(result1)
 
-    # Teste 3: Dados com ruído (simular degradação)
-    print("\n[Teste 3/3] Dados com ruído adicionado...")
-    y_noisy = y.values + np.random.normal(0, 0.5, len(y))
-    result3 = monitor.validate_new_data(X_scaled, y_noisy, predictor.scaler)
-    monitor.print_validation_report(result3)
+        # Teste 2: Subset aleatório (simular dados novos)
+        print("\n[Teste 2/3] Subset aleatório (simular novos dados)...")
+        indices = np.random.choice(len(y), size=int(len(y) * 0.7), replace=False)
+        X_subset = X[indices]
+        y_subset = y[indices]
+        result2 = monitor.validate_new_data(X_subset, y_subset, predictor.scaler)
+        monitor.print_validation_report(result2)
 
-    # Resumo
-    print("\n" + "=" * 70)
-    print("RESUMO")
-    print("=" * 70)
-    history_df = monitor.get_history_df()
-    print(f"\nTotal de validações: {len(history_df)}")
-    print(f"Passou: {(history_df['status'] == 'PASS').sum()}")
-    print(f"Avisos: {(history_df['status'] == 'WARN').sum()}")
-    print(f"Falhas: {(history_df['status'] == 'FAIL').sum()}")
+        # Teste 3: Dados com ruído (simular degradação)
+        print("\n[Teste 3/3] Dados com ruído adicionado...")
+        y_noisy = y + np.random.normal(0, 0.5, len(y))
+        result3 = monitor.validate_new_data(X, y_noisy, predictor.scaler)
+        monitor.print_validation_report(result3)
 
-    print("\n✅ Testes do monitor completados!\n")
+        # Resumo
+        print("\n" + "=" * 70)
+        print("RESUMO")
+        print("=" * 70)
+        history_df = monitor.get_history_df()
+        print(f"\nTotal de validações: {len(history_df)}")
+        print(f"Passou: {(history_df['status'] == 'PASS').sum()}")
+        print(f"Avisos: {(history_df['status'] == 'WARN').sum()}")
+        print(f"Falhas: {(history_df['status'] == 'FAIL').sum()}")
+
+        print("\n✅ Testes do monitor completados!\n")
+    except Exception as e:
+        print(f"Erro ao testar o monitor: {e}")

@@ -19,6 +19,34 @@ sys.path.insert(0, os.path.dirname(__file__))
 from nba_prediction_model_boxscores_v2 import NBAPointsPredictorBoxscoresV2
 
 
+def _baseline_predict(train_df: pd.DataFrame, test_df: pd.DataFrame, window: int = 5) -> np.ndarray:
+    """Baseline simples: média móvel dos últimos N jogos por jogador."""
+    global_mean = float(train_df["PTS"].mean())
+    baseline_preds = []
+
+    train_groups = train_df.groupby("PLAYER_NAME", sort=False)
+
+    for _, row in test_df.iterrows():
+        player = row["PLAYER_NAME"]
+        if player in train_groups.groups:
+            player_history = train_groups.get_group(player).sort_values("GAME_DATE")["PTS"].tail(window)
+            pred = float(player_history.mean()) if len(player_history) > 0 else global_mean
+        else:
+            pred = global_mean
+        baseline_preds.append(pred)
+
+    return np.array(baseline_preds, dtype=float)
+
+
+def _summarize_metrics(y_true: np.ndarray, y_pred: np.ndarray, accuracy_threshold: float = 1.5) -> dict[str, float]:
+    residuals = y_true - y_pred
+    mae = float(np.mean(np.abs(residuals)))
+    rmse = float(np.sqrt(np.mean(residuals**2)))
+    r2 = float(1 - (np.sum(residuals**2) / np.sum((y_true - np.mean(y_true)) ** 2))) if len(y_true) > 1 else 0.0
+    accuracy = float((np.abs(residuals) <= accuracy_threshold).mean() * 100)
+    return {"r2": r2, "mae": mae, "rmse": rmse, "accuracy": accuracy}
+
+
 def validate_with_time_series_split(data_path: str = "data/nba_player_boxscores_multi_season.csv", n_splits: int = 5, alpha: float = 2.0):
     """
     Validação com TimeSeriesSplit - CORRETO para dados temporais
@@ -34,17 +62,15 @@ def validate_with_time_series_split(data_path: str = "data/nba_player_boxscores_
     print("🔬 VALIDAÇÃO COM TIMESERIESSPLIT (SEM DATA LEAKAGE)")
     print("=" * 80 + "\n")
 
-    # Carregar dados
+    # Carregar dados e gerar features no mesmo pipeline do modelo
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Arquivo não encontrado: {data_path}")
 
-    df = pd.read_csv(data_path)
-    df.columns = [c.strip().upper() for c in df.columns]
+    predictor = NBAPointsPredictorBoxscoresV2(data_path)
+    df = predictor.df.copy() if predictor.df is not None else pd.DataFrame()
+    if df.empty:
+        raise ValueError("Falha ao carregar dataset com features derivadas")
 
-    if "GAME_DATE" in df.columns:
-        df["GAME_DATE"] = pd.to_datetime(df["GAME_DATE"], errors="coerce")
-
-    # Sort por data
     df = df.sort_values("GAME_DATE").reset_index(drop=True)
 
     # Extrair datas únicas para split
@@ -76,11 +102,25 @@ def validate_with_time_series_split(data_path: str = "data/nba_player_boxscores_
         print(f"Treino: {len(train_df):,} samples | {train_date_range}")
         print(f"Teste:  {len(test_df):,} samples | {test_date_range}")
 
-        # Preparar features
-        feature_cols = ["LAG_PTS_3", "LAG_PTS_5", "LAG_PTS_10", "LAG_PTS_15", "LAG_MIN_5", "LAG_MIN_10", "MOMENTUM", "VOLATILITY", "CONSISTENCY", "FORM_INDICATOR", "GAME_STREAK", "IS_HOME", "BACK_TO_BACK", "MONTH", "DAY_OF_WEEK"]
+        candidate_features = [
+            "LAG_PTS_3",
+            "LAG_PTS_5",
+            "LAG_PTS_10",
+            "LAG_PTS_15",
+            "LAG_MIN_5",
+            "LAG_MIN_10",
+            "MOMENTUM",
+            "VOLATILITY",
+            "CONSISTENCY",
+            "FORM_INDICATOR",
+            "GAME_STREAK",
+            "IS_HOME",
+            "BACK_TO_BACK",
+            "MONTH",
+            "DAY_OF_WEEK",
+        ]
 
-        # Filtrar features que existem
-        available_features = [col for col in feature_cols if col in train_df.columns]
+        available_features = [col for col in candidate_features if col in train_df.columns]
 
         if len(available_features) < 5:
             print(f"⚠️ Insuficientes features: {len(available_features)}")
@@ -93,8 +133,12 @@ def validate_with_time_series_split(data_path: str = "data/nba_player_boxscores_
 
             # Pesos por recência
             if "SEASON" in train_df.columns:
-                weights = train_df["SEASON"].astype(float)
-                weights = weights / weights.min()
+                season_year = pd.to_numeric(train_df["SEASON"].astype(str).str.split("-").str[-1], errors="coerce")
+                if season_year.notna().any():
+                    weights = season_year.fillna(season_year.median())
+                    weights = weights / weights.min()
+                else:
+                    weights = np.ones(len(X_train))
             else:
                 weights = np.ones(len(X_train))
 
@@ -218,39 +262,58 @@ def validate_with_real_production_data(data_path: str = "data/nba_player_boxscor
     predictor.train(test_date=cutoff_date, alpha=alpha)
 
     # Testar
-    X_test = test_df[predictor.feature_cols].fillna(0)
-    y_test = test_df["PTS"]
+    test_features = predictor.df[predictor.df["GAME_DATE"] > cutoff_date].copy() if predictor.df is not None else pd.DataFrame()
+    X_test = test_features[predictor.feature_cols].fillna(0)
+    y_test = test_features["PTS"]
 
     X_test_scaled = predictor.scaler.transform(X_test)
     y_pred = predictor.model.predict(X_test_scaled)
+    y_pred_raw = []
+    for _, row in test_features.iterrows():
+        pred_row = predictor.predict_points(str(row["PLAYER_NAME"]), minutes=float(row["MIN"]) if pd.notna(row["MIN"]) else 30, calibrated=False)
+        y_pred_raw.append(float(pred_row["predicted_points"]))
+    y_pred_raw = np.array(y_pred_raw, dtype=float)
 
     # Métricas
-    residuals = y_test.values - y_pred
-    mae = np.mean(np.abs(residuals))
-    rmse = np.sqrt(np.mean(residuals**2))
-    r2 = 1 - (np.sum(residuals**2) / np.sum((y_test.values - y_test.mean()) ** 2))
-    accuracy = (np.abs(residuals) <= 1.5).mean() * 100
+    model_metrics = _summarize_metrics(y_test.values, y_pred)
+    model_raw_metrics = _summarize_metrics(y_test.values, y_pred_raw)
+    baseline_pred = _baseline_predict(train_df, test_df)
+    baseline_metrics = _summarize_metrics(y_test.values, baseline_pred)
 
-    print(f"✅ R² (Teste Real) = {r2:.4f}")
-    print(f"✅ MAE (Teste Real) = {mae:.2f} pts")
-    print(f"✅ RMSE (Teste Real) = {rmse:.2f} pts")
-    print(f"✅ Accuracy (Teste Real) = {accuracy:.1f}%\n")
+    print(f"✅ R² (Teste Real) = {model_metrics['r2']:.4f}")
+    print(f"✅ MAE (Teste Real) = {model_metrics['mae']:.2f} pts")
+    print(f"✅ RMSE (Teste Real) = {model_metrics['rmse']:.2f} pts")
+    print(f"✅ Accuracy (Teste Real) = {model_metrics['accuracy']:.1f}%")
+    print(f"🧪 MAE Sem Calibração = {model_raw_metrics['mae']:.2f} pts")
+    print(f"🧪 RMSE Sem Calibração = {model_raw_metrics['rmse']:.2f} pts")
+    print(f"🧱 Baseline MAE = {baseline_metrics['mae']:.2f} pts")
+    print(f"🧱 Baseline RMSE = {baseline_metrics['rmse']:.2f} pts")
+    print(f"🧱 Baseline Accuracy = {baseline_metrics['accuracy']:.1f}%")
+    print(f"📈 Delta MAE v2.2 vs v2.1 = {model_metrics['mae'] - model_raw_metrics['mae']:+.2f} pts")
+    print(f"📉 Delta MAE vs Baseline = {model_metrics['mae'] - baseline_metrics['mae']:+.2f} pts")
+    print(f"📉 Delta RMSE vs Baseline = {model_metrics['rmse'] - baseline_metrics['rmse']:+.2f} pts\n")
 
     # Comparação treino vs teste
     train_mae = predictor.model_stats.get("mae", 0)
     print("📊 Comparação Treino vs Teste:")
     print(f"   MAE Treino: {train_mae:.2f} pts")
-    print(f"   MAE Teste: {mae:.2f} pts")
-    print(f"   Diferença: {mae - train_mae:+.2f} pts")
+    print(f"   MAE Teste: {model_metrics['mae']:.2f} pts")
+    print(f"   Diferença: {model_metrics['mae'] - train_mae:+.2f} pts")
 
-    if abs(mae - train_mae) < 0.5:
+    if abs(model_metrics["mae"] - train_mae) < 0.5:
         print("   ✓ Generalização EXCELENTE (diferença < 0.5)")
-    elif abs(mae - train_mae) < 1.0:
+    elif abs(model_metrics["mae"] - train_mae) < 1.0:
         print("   ⚠️ Generalização BOA (diferença < 1.0)")
     else:
         print("   🔴 Generalização POBRE (diferença >= 1.0)")
 
-    return {"r2": r2, "mae": mae, "rmse": rmse, "accuracy": accuracy, "train_mae": train_mae, "test_samples": len(test_df)}
+    return {
+        "model": model_metrics,
+        "model_raw": model_raw_metrics,
+        "baseline": baseline_metrics,
+        "train_mae": train_mae,
+        "test_samples": len(test_df),
+    }
 
 
 if __name__ == "__main__":
@@ -271,3 +334,13 @@ if __name__ == "__main__":
     print("\n" + "=" * 80)
     print("[VALIDACAO COMPLETA]")
     print("=" * 80)
+
+    if isinstance(prod_results, dict) and "model" in prod_results and "baseline" in prod_results:
+        print("\n[3] RESUMO COMPARATIVO MODELO VS BASELINE")
+        print("-" * 80)
+        print(f"Modelo  MAE: {prod_results['model']['mae']:.2f} | RMSE: {prod_results['model']['rmse']:.2f} | Acc: {prod_results['model']['accuracy']:.1f}%")
+        print(f"Raw     MAE: {prod_results['model_raw']['mae']:.2f} | RMSE: {prod_results['model_raw']['rmse']:.2f} | Acc: {prod_results['model_raw']['accuracy']:.1f}%")
+        print(f"Baseline MAE: {prod_results['baseline']['mae']:.2f} | RMSE: {prod_results['baseline']['rmse']:.2f} | Acc: {prod_results['baseline']['accuracy']:.1f}%")
+        print(f"Gain MAE: {prod_results['model_raw']['mae'] - prod_results['model']['mae']:+.2f}")
+        print(f"Delta MAE: {prod_results['model']['mae'] - prod_results['baseline']['mae']:+.2f}")
+        print(f"Delta RMSE: {prod_results['model']['rmse'] - prod_results['baseline']['rmse']:+.2f}")

@@ -193,6 +193,52 @@ class AutomaticModelMonitor:
             "recent_10": len([r for r in player_records[-10:] if r["is_accurate"]]),
         }
 
+    def get_player_rankings(self, min_predictions: int = 3, top_n: int = 10) -> pd.DataFrame:
+        """Retorna ranking de jogadores com maior volume e erro médio."""
+        if not self.history:
+            return pd.DataFrame()
+
+        df = pd.DataFrame(self.history)
+        grouped = (
+            df.groupby("player")
+            .agg(
+                predictions=("error", "count"),
+                mae=("error", "mean"),
+                rmse=("error", lambda x: float(np.sqrt(np.mean(np.square(x))))),
+                accuracy_percent=("is_accurate", lambda x: float(np.mean(x) * 100)),
+                avg_confidence=("confidence", "mean"),
+            )
+            .reset_index()
+        )
+
+        grouped = grouped[grouped["predictions"] >= min_predictions].sort_values(["mae", "predictions"], ascending=[False, False])
+        return grouped.head(top_n).reset_index(drop=True)
+
+    def get_line_range_stats(self, bins: list[float] | None = None) -> pd.DataFrame:
+        """Retorna métricas por faixa de linha prevista."""
+        if not self.history:
+            return pd.DataFrame()
+
+        if bins is None:
+            bins = [0, 5, 10, 15, 20, 25, 30, 100]
+
+        df = pd.DataFrame(self.history)
+        df["predicted_bin"] = pd.cut(df["predicted"], bins=bins, right=False, include_lowest=True)
+
+        range_stats = (
+            df.groupby("predicted_bin")
+            .agg(
+                predictions=("error", "count"),
+                mae=("error", "mean"),
+                rmse=("error", lambda x: float(np.sqrt(np.mean(np.square(x))))),
+                accuracy_percent=("is_accurate", lambda x: float(np.mean(x) * 100)),
+            )
+            .reset_index()
+        )
+
+        range_stats["predicted_bin"] = range_stats["predicted_bin"].astype(str)
+        return range_stats
+
     def get_daily_stats(self, days: int = 7) -> pd.DataFrame:
         """Retorna estatísticas diárias"""
         if not self.history:
@@ -235,6 +281,10 @@ class AutomaticModelMonitor:
 # ============================================================================
 
 if __name__ == "__main__":
+    import sys
+
+    sys.stdout.reconfigure(encoding="utf-8")
+
     monitor = AutomaticModelMonitor()
 
     # Simula predições
