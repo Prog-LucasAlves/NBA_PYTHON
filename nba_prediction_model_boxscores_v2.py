@@ -72,13 +72,13 @@ class NBAPointsPredictorBoxscoresV2:
         # Lag features: pontos nos últimos N games
         for window in [3, 5, 10, 15]:
             col_name = f"LAG_PTS_{window}"
-            # shift(1) pega linha anterior (passado), rolling tira média de últimos N
-            self.df_raw[col_name] = self.df_raw.groupby("PLAYER_NAME")["PTS"].shift(1).rolling(window=window, min_periods=1).mean()
+            # shift(1) pega o jogo anterior do próprio jogador; rolling fica isolado por grupo
+            self.df_raw[col_name] = self.df_raw.groupby("PLAYER_NAME")["PTS"].transform(lambda s: s.shift(1).rolling(window=window, min_periods=1).mean())
 
         # Lag features: minutos nos últimos N games
         for window in [5, 10]:
             col_name = f"LAG_MIN_{window}"
-            self.df_raw[col_name] = self.df_raw.groupby("PLAYER_NAME")["MIN"].shift(1).rolling(window=window, min_periods=1).mean()
+            self.df_raw[col_name] = self.df_raw.groupby("PLAYER_NAME")["MIN"].transform(lambda s: s.shift(1).rolling(window=window, min_periods=1).mean())
 
     def _create_additional_features(self):
         """Features adicionais sem data leakage"""
@@ -86,20 +86,20 @@ class NBAPointsPredictorBoxscoresV2:
         # Preencher NaN iniciais com média global (primeiros games de cada player)
         for col in ["LAG_PTS_3", "LAG_PTS_5", "LAG_PTS_10", "LAG_PTS_15"]:
             if col in self.df_raw.columns:
-                self.df_raw[col] = self.df_raw[col].fillna(self.df_raw["PTS"].mean())
+                self.df_raw[col] = self.df_raw[col].fillna(self.df_raw["PTS"].median())
 
         for col in ["LAG_MIN_5", "LAG_MIN_10"]:
             if col in self.df_raw.columns:
-                self.df_raw[col] = self.df_raw[col].fillna(self.df_raw["MIN"].mean())
+                self.df_raw[col] = self.df_raw[col].fillna(self.df_raw["MIN"].median())
 
         # Momentum: mudança % nos últimos 5 vs 10 jogos
         self.df_raw["MOMENTUM"] = (self.df_raw["LAG_PTS_5"] - self.df_raw["LAG_PTS_10"]) / self.df_raw["LAG_PTS_10"].replace(0, 1)
 
         # Volatilidade: std dos últimos 10 games
-        self.df_raw["VOLATILITY"] = self.df_raw.groupby("PLAYER_NAME")["PTS"].shift(1).rolling(window=10, min_periods=1).std().fillna(0)
+        self.df_raw["VOLATILITY"] = self.df_raw.groupby("PLAYER_NAME")["PTS"].transform(lambda s: s.shift(1).rolling(window=10, min_periods=1).std()).fillna(0)
 
         # Consistency: CV (coefficient of variation)
-        self.df_raw["CONSISTENCY"] = self.df_raw.groupby("PLAYER_NAME")["PTS"].shift(1).rolling(window=10, min_periods=1).apply(lambda x: x.std() / (x.mean() + 1e-6) if len(x) > 1 else 0).fillna(0)
+        self.df_raw["CONSISTENCY"] = self.df_raw.groupby("PLAYER_NAME")["PTS"].transform(lambda s: s.shift(1).rolling(window=10, min_periods=1).apply(lambda x: x.std() / (x.mean() + 1e-6) if len(x) > 1 else 0)).fillna(0)
 
         # Form indicator: mudança % 3 vs 5 jogos
         self.df_raw["FORM_INDICATOR"] = (self.df_raw["LAG_PTS_3"] - self.df_raw["LAG_PTS_5"]) / self.df_raw["LAG_PTS_5"].replace(0, 1)
@@ -110,20 +110,19 @@ class NBAPointsPredictorBoxscoresV2:
             player_mask = self.df_raw["PLAYER_NAME"] == player
             player_indices = self.df_raw[player_mask].index
             player_pts = self.df_raw.loc[player_indices, "PTS"].values
-            mean_pts = player_pts.mean()
+            mean_pts = float(player_pts.mean()) if len(player_pts) > 0 else 0.0
 
             current_streak = 0
             streaks = []
             for pts in player_pts:
-                current_streak = current_streak + 1 if pts > mean_pts else 0
                 streaks.append(current_streak)
+                current_streak = current_streak + 1 if pts > mean_pts else 0
 
             self.df_raw.loc[player_indices, "GAME_STREAK"] = streaks
 
         # Fase da temporada
         if "GAME_DATE" in self.df_raw.columns:
             self.df_raw["MONTH"] = self.df_raw["GAME_DATE"].dt.month
-            self.df_raw["SEASON_PHASE"] = pd.cut(self.df_raw["MONTH"], bins=[0, 3, 6, 9, 12], labels=["Playoffs", "Final", "Meio", "Inicial"])
             self.df_raw["DAY_OF_WEEK"] = self.df_raw["GAME_DATE"].dt.dayofweek
 
         # Home/Away
@@ -134,7 +133,8 @@ class NBAPointsPredictorBoxscoresV2:
 
         # Back-to-back games (simplificado)
         if "GAME_DATE" in self.df_raw.columns:
-            self.df_raw["BACK_TO_BACK"] = (self.df_raw.groupby("PLAYER_NAME")["GAME_DATE"].shift(1).apply(lambda x: (pd.Timestamp.now() - x).days == 1 if pd.notna(x) else 0)).astype(int)
+            previous_game_date = self.df_raw.groupby("PLAYER_NAME")["GAME_DATE"].shift(1)
+            self.df_raw["BACK_TO_BACK"] = self.df_raw["GAME_DATE"].sub(previous_game_date).dt.days.eq(1).fillna(False).astype(int)
         else:
             self.df_raw["BACK_TO_BACK"] = 0
 
@@ -198,15 +198,20 @@ class NBAPointsPredictorBoxscoresV2:
         self.feature_cols = [col for col in candidate_features if col in train_df.columns]
 
         if len(self.feature_cols) < 5:
-            # Se muito poucas features, usar apenas básicas
-            self.feature_cols = [col for col in ["PTS", "MIN", "FG", "AST"] if col in train_df.columns]
+            # Se muito poucas features, usar apenas colunas básicas que não vazam o alvo
+            fallback_features = ["MIN", "FG", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "IS_HOME", "BACK_TO_BACK", "MONTH", "DAY_OF_WEEK"]
+            self.feature_cols = [col for col in fallback_features if col in train_df.columns]
+
+        if len(self.feature_cols) < 5:
+            # Último fallback seguro
+            self.feature_cols = [col for col in ["MIN", "REB", "AST", "TOV"] if col in train_df.columns]
 
         print(f"Usando {len(self.feature_cols)} features: {self.feature_cols[:5]}...")
 
         X = train_df[self.feature_cols].fillna(0)
         y = train_df["PTS"]
 
-        # Ponderação por recência (temporadas mais recentes = peso maior)
+        # Ponderação por recência (datas mais recentes = peso maior)
         if "SEASON" in train_df.columns:
             # SEASON é string tipo "2022-23", extrair ano final
             try:
@@ -215,9 +220,13 @@ class NBAPointsPredictorBoxscoresV2:
             except:
                 weights = np.ones(len(train_df))
         else:
-            # Se não há SEASON, usar recência por data
-            weights = (train_df["GAME_DATE"] - train_df["GAME_DATE"].min()).dt.days
-            weights = np.maximum(weights / weights.min() if weights.min() > 0 else 1.0, 1.0)
+            # Escala suave por recência, evitando pesos extremos
+            recency_days = (train_df["GAME_DATE"] - train_df["GAME_DATE"].min()).dt.days.astype(float)
+            max_days = float(recency_days.max()) if len(recency_days) > 0 else 0.0
+            if max_days > 0:
+                weights = 1.0 + (recency_days / max_days)
+            else:
+                weights = np.ones(len(train_df))
 
         # Scale features
         self.X_scaled = self.scaler.fit_transform(X)
@@ -278,7 +287,7 @@ class NBAPointsPredictorBoxscoresV2:
 
         return self
 
-    def predict_points(self, player_name: str, minutes: float = 30) -> Dict:
+    def predict_points(self, player_name: str, minutes: float = 30, calibrated: bool = True) -> Dict:
         """
         Prediz pontos para um jogador
         Usa dados históricos até a data de treino
@@ -321,6 +330,18 @@ class NBAPointsPredictorBoxscoresV2:
         overall_avg = player_data["PTS"].mean()
         trend_pct = ((recent_avg - overall_avg) / overall_avg * 100) if overall_avg > 0 else 0
 
+        player_bias = recent_avg - overall_avg if overall_avg > 0 else 0.0
+        calibration_weight = 0.20
+        if calibrated:
+            # Calibração leve por jogador para capturar casos ruins individuais
+            # Mistura a previsão do modelo com a forma recente do próprio jogador.
+            if not np.isnan(recent_avg) and recent_avg > 0:
+                predicted_pts = (1 - calibration_weight) * predicted_pts + calibration_weight * recent_avg
+
+            # Ajuste adicional suave pela diferença entre forma recente e média histórica
+            if abs(player_bias) >= 2.0:
+                predicted_pts += max(-1.5, min(1.5, player_bias * 0.10))
+
         # Confiança baseada em R²
         confidence = min(max(self.model_stats.get("r2", 0.5), 0.3), 0.95)
 
@@ -337,6 +358,8 @@ class NBAPointsPredictorBoxscoresV2:
             "confidence": confidence,
             "recent_avg": float(recent_avg),
             "historical_avg": float(overall_avg),
+            "player_bias": float(player_bias),
+            "calibration_weight": calibration_weight,
         }
 
     def get_top_picks(self, n: int = 5, ev_threshold: float = 1.05) -> pd.DataFrame:

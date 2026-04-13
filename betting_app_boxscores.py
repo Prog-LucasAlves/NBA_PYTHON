@@ -534,6 +534,20 @@ with tab_predictor:
 
     st.divider()
 
+    st.subheader("Calibração por Jogador")
+    cal_col1, cal_col2, cal_col3 = st.columns(3)
+
+    with cal_col1:
+        st.metric(label="Média Recente", value=f"{float(prediction.get('recent_avg', 0.0)):.2f} pts")
+
+    with cal_col2:
+        st.metric(label="Média Histórica", value=f"{float(prediction.get('historical_avg', 0.0)):.2f} pts")
+
+    with cal_col3:
+        st.metric(label="Bias do Jogador", value=f"{float(prediction.get('player_bias', 0.0)):+.2f} pts")
+
+    st.divider()
+
     # ========================================================================
     # SEÇÃO DE ANÁLISE EV+
     # ========================================================================
@@ -574,6 +588,19 @@ with tab_predictor:
 
     st.subheader("Registrar Aposta")
 
+    # Lógica de "Aposta Arriscada"
+    rmse = predictor.model_stats.get("rmse", 3.48)
+    # Garante que rmse seja float mesmo se vier string ou algo estranho
+    rmse_val = float(rmse) if isinstance(rmse, (int, float)) else 3.48
+
+    edge = abs(prediction["predicted_points"] - market_line)
+    is_risky = edge < rmse_val
+
+    if is_risky:
+        st.warning(f"⚠️ **APOSTA ARRISCADA**: A sua vantagem/edge de **{edge:.2f} pts** é menor que o erro médio do modelo (**{rmse_val:.2f} pts**). A aposta está dentro da margem de ruído/azar.")
+    else:
+        st.success(f"✅ **APOSTA COM BOA MARGEM**: O seu edge de **{edge:.2f} pts** supera o erro médio do modelo (**{rmse_val:.2f} pts**). Margem de segurança encontrada!")
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -581,7 +608,7 @@ with tab_predictor:
 
     with col2:
         # Determinar tipo de aposta baseado em EV+
-        bet_type = st.selectbox("Tipo de Aposta", options=["Over"], index=0)
+        bet_type = st.selectbox("Tipo de Aposta", options=["Over" if prediction["predicted_points"] > market_line else "Under"], index=0)
 
     with col3:
         st.write("")
@@ -635,7 +662,9 @@ with tab_predictor:
 
     with col2:
         st.write("**Recente vs Histórico**")
-        comparison_df = pd.DataFrame({"Período": ["Últimos 10 Jogos", "Histórico", "Diferença"], "Pontos Médios": [f"{prediction['recent_avg']:.2f}", f"{prediction['historical_avg']:.2f}", f"{prediction['recent_avg'] - prediction['historical_avg']:+.2f}"]})
+        recent_avg_display = float(prediction.get("recent_avg", 0.0))
+        historical_avg_display = float(prediction.get("historical_avg", 0.0))
+        comparison_df = pd.DataFrame({"Período": ["Últimos 10 Jogos", "Histórico", "Diferença"], "Pontos Médios": [f"{recent_avg_display:.2f}", f"{historical_avg_display:.2f}", f"{recent_avg_display - historical_avg_display:+.2f}"]})
         st.dataframe(comparison_df, use_container_width=True, hide_index=True)
 
     st.divider()
@@ -1031,7 +1060,7 @@ with tab_monitor:
     with col2:
         st.metric(
             label="MAE (Pontos)",
-            value=f"{mae:.2f} pts",
+            value=f"{mae:.3f} pts",
             delta="Erro médio",
             delta_color="inverse",
         )
@@ -1039,7 +1068,7 @@ with tab_monitor:
     with col3:
         st.metric(
             label="Acurácia",
-            value=f"{accuracy:.1f}%",
+            value=f"{accuracy:.2f}%",
             delta="Taxa de acerto",
             delta_color="normal",
         )
@@ -1123,7 +1152,15 @@ with tab_monitor:
             .head(7)
         )
 
-        st.dataframe(daily_stats, use_container_width=True, hide_index=True)
+        styled_daily_stats = daily_stats.style.format(
+            {
+                "MAE": "{:.3f}",
+                "RMSE": "{:.3f}",
+                "ACCURACY": "{:.2f}",
+            },
+        )
+
+        st.dataframe(styled_daily_stats, use_container_width=True, hide_index=True)
 
         # Gráfico de acurácia diária
         if not daily_stats.empty:
@@ -1140,6 +1177,51 @@ with tab_monitor:
             st.altair_chart(chart, use_container_width=True)
     else:
         st.info("📝 Nenhum dado de desempenho diário disponível ainda.")
+
+    st.divider()
+    st.subheader("🔎 Erro por Jogador e Faixa")
+
+    monitor_state = AutomaticModelMonitor()
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        player_rankings = monitor_state.get_player_rankings(min_predictions=3, top_n=10)
+        if not player_rankings.empty:
+            player_rankings_display = player_rankings.copy()
+            player_rankings_display["mae"] = player_rankings_display["mae"].round(3)
+            player_rankings_display["rmse"] = player_rankings_display["rmse"].round(3)
+            player_rankings_display["accuracy_percent"] = player_rankings_display["accuracy_percent"].round(2)
+            player_rankings_display["avg_confidence"] = player_rankings_display["avg_confidence"].round(2)
+            player_rankings_display.columns = [
+                "Jogador",
+                "Predições",
+                "MAE",
+                "RMSE",
+                "Acurácia (%)",
+                "Confiança Média",
+            ]
+            st.dataframe(player_rankings_display, use_container_width=True, hide_index=True)
+        else:
+            st.info("Sem histórico suficiente para ranking por jogador.")
+
+    with col2:
+        line_range_stats = monitor_state.get_line_range_stats()
+        if not line_range_stats.empty:
+            line_range_display = line_range_stats.copy()
+            line_range_display["mae"] = line_range_display["mae"].round(3)
+            line_range_display["rmse"] = line_range_display["rmse"].round(3)
+            line_range_display["accuracy_percent"] = line_range_display["accuracy_percent"].round(2)
+            line_range_display.columns = [
+                "Faixa Prevista",
+                "Predições",
+                "MAE",
+                "RMSE",
+                "Acurácia (%)",
+            ]
+            st.dataframe(line_range_display, use_container_width=True, hide_index=True)
+        else:
+            st.info("Sem histórico suficiente para análise por faixa de linha.")
 
     st.divider()
     st.subheader("📈 Importância das Features")
@@ -1171,21 +1253,21 @@ with tab_monitor:
 
     st.divider()
 
-    # VALIDAÇÃO CRUZADA
-    st.subheader("🔄 Validação Cruzada (5-Fold)")
+    # VALIDAÇÃO TEMPORAL
+    st.subheader("🔄 Validação Temporal (TimeSeriesSplit)")
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.info("""
         **Configuração:**
-        - Estratégia: 5-Fold CV
-        - Shuffle: True
-        - Random State: 42
+        - Estratégia: TimeSeriesSplit
+        - Shuffle: False
+        - Ordem temporal preservada
 
         **Objetivo:**
         Validar estabilidade do modelo
-        em diferentes subconjuntos dos dados
+        sem vazamento temporal
         """)
 
     with col2:
@@ -1211,7 +1293,7 @@ with tab_monitor:
             f"{len(predictor.feature_cols) if hasattr(predictor, 'feature_cols') else 0} features",
             "Ativo",
         ],
-        "Alvo": ["≥ 0.80", "< 3.5 pts", "< 2.8 pts", "24 features", "v2.1"],
+        "Alvo": ["≥ 0.80", "< 3.5 pts", "< 2.8 pts", "24 features", "v2.2"],
         "Status": [
             "✅" if predictor.model_stats.get("r2", 0) >= 0.80 else "⚠️",
             "✅" if predictor.model_stats.get("rmse", 999) < 3.5 else "⚠️",
@@ -1292,5 +1374,5 @@ with tab_monitor:
 st.divider()
 st.markdown("""
 ---
-**Desenvolvido para apostadores sérios | v2.0**
+**Desenvolvido para apostadores sérios | v2.2**
 """)

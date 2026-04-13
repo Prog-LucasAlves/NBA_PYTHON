@@ -862,5 +862,689 @@
     "error": 8.408084884165623,
     "confidence": 0.7889403628339665,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:23:12.806327",
+    "player": "Zaccharie Risacher",
+    "actual": 11.379562043795621,
+    "predicted": 9.65212188398951,
+    "error": 1.727440159806111,
+    "confidence": 0.8239309020821326,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:23:44.034914",
+    "player": "Gabe Vincent",
+    "actual": 6.748466257668712,
+    "predicted": 5.583241607563203,
+    "error": 1.1652246501055084,
+    "confidence": 0.7307013712251388,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-04-01T09:24:29.347115",
+    "player": "Paolo Banchero",
+    "actual": 22.442748091603054,
+    "predicted": 37.78513942387488,
+    "error": 15.342391332271827,
+    "confidence": 0.9999560066832205,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:25:44.131707",
+    "player": "Wendell Carter Jr.",
+    "actual": 12.058679706601467,
+    "predicted": 13.731366290457691,
+    "error": 1.6726865838562244,
+    "confidence": 0.8299180407946036,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:26:06.700315",
+    "player": "Tristan da Silva",
+    "actual": 8.545454545454545,
+    "predicted": 17.509549699694574,
+    "error": 8.96409515424003,
+    "confidence": 0.9619610948908104,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:27:08.047825",
+    "player": "VJ Edgecombe",
+    "actual": 16.029411764705884,
+    "predicted": 30.033856465196372,
+    "error": 14.004444700490488,
+    "confidence": 0.9999977334990162,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:28:00.055289",
+    "player": "Quentin Grimes",
+    "actual": 11.12540192926045,
+    "predicted": 23.492476535697115,
+    "error": 12.367074606436665,
+    "confidence": 0.9997999093177107,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:28:38.101764",
+    "player": "Tyrese Maxey",
+    "actual": 21.04461942257218,
+    "predicted": 26.8161974631427,
+    "error": 5.771578040570521,
+    "confidence": 0.7529176833482858,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:29:56.489813",
+    "player": "Jaylen Brown",
+    "actual": 24.217002237136466,
+    "predicted": 37.040704324994486,
+    "error": 12.82370208785802,
+    "confidence": 0.9975705697010492,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:34:42.085015",
+    "player": "Kevin Durant",
+    "actual": 27.446376811594202,
+    "predicted": 30.69639698172069,
+    "error": 3.2500201701264864,
+    "confidence": 0.966305090392706,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:35:19.656282",
+    "player": "Alperen Sengun",
+    "actual": 16.883190883190885,
+    "predicted": 23.317706474267517,
+    "error": 6.434515591076632,
+    "confidence": 0.9225014781515438,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:35:47.213393",
+    "player": "Reed Sheppard",
+    "actual": 9.682539682539682,
+    "predicted": 20.2347119349803,
+    "error": 10.552172252440618,
+    "confidence": 0.9765922900647945,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:36:19.581684",
+    "player": "Amen Thompson",
+    "actual": 14.03448275862069,
+    "predicted": 20.151831932559794,
+    "error": 6.117349173939104,
+    "confidence": 0.8594731576252145,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:38:10.517901",
+    "player": "Cedric Coward",
+    "actual": 13.344827586206897,
+    "predicted": 18.020424251019882,
+    "error": 4.675596664812986,
+    "confidence": 0.9483995982984601,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:38:50.418934",
+    "player": "Olivier-Maxence Prosper",
+    "actual": 5.619718309859155,
+    "predicted": 14.591031046208244,
+    "error": 8.971312736349088,
+    "confidence": 0.819225371001614,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:39:54.670112",
+    "player": "Precious Achiuwa",
+    "actual": 7.9147286821705425,
+    "predicted": 18.307191151188025,
+    "error": 10.392462469017483,
+    "confidence": 0.9220500083154277,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:40:31.714743",
+    "player": "Devin Carter",
+    "actual": 5.75,
+    "predicted": 18.84601421156742,
+    "error": 13.096014211567422,
+    "confidence": 0.9694816618051014,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:41:20.400345",
+    "player": "Malik Monk",
+    "actual": 13.712359550561798,
+    "predicted": 25.21632786693362,
+    "error": 11.503968316371823,
+    "confidence": 0.9999128546952949,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:41:36.123378",
+    "player": "Maxime Raynaud",
+    "actual": 12.0,
+    "predicted": 17.6668934336431,
+    "error": 5.6668934336431,
+    "confidence": 0.8250569364854452,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:42:47.557611",
+    "player": "Sandro Mamukelashvili",
+    "actual": 6.806083650190114,
+    "predicted": 18.21905895270521,
+    "error": 11.412975302515097,
+    "confidence": 0.9181873280885124,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:43:40.163133",
+    "player": "Ja'Kobe Walter",
+    "actual": 7.879310344827586,
+    "predicted": 12.288333043774992,
+    "error": 4.409022698947406,
+    "confidence": 0.7947647538302014,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:44:42.359579",
+    "player": "Bruce Brown",
+    "actual": 9.403050108932462,
+    "predicted": 10.151989124900885,
+    "error": 0.748939015968423,
+    "confidence": 0.8594835113864652,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-04-01T09:46:01.062337",
+    "player": "Ace Bailey",
+    "actual": 13.537313432835822,
+    "predicted": 29.513987346579317,
+    "error": 15.976673913743495,
+    "confidence": 0.9984414599511171,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:46:33.332470",
+    "player": "Brice Sensabaugh",
+    "actual": 11.641618497109826,
+    "predicted": 26.59417376386989,
+    "error": 14.952555266760063,
+    "confidence": 0.9639820287466897,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:46:58.972748",
+    "player": "Cody Williams",
+    "actual": 6.54954954954955,
+    "predicted": 23.313715917508134,
+    "error": 16.764166367958584,
+    "confidence": 0.9953611893243597,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:47:42.953535",
+    "player": "Harrison Barnes",
+    "actual": 13.743785850860421,
+    "predicted": 9.56798654579873,
+    "error": 4.175799305061691,
+    "confidence": 0.8850849695419272,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:48:04.213510",
+    "player": "Harrison Barnes",
+    "actual": 13.743785850860421,
+    "predicted": 9.56798654579873,
+    "error": 4.175799305061691,
+    "confidence": 0.8850849695419272,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:49:03.096955",
+    "player": "Dylan Harper",
+    "actual": 11.564516129032258,
+    "predicted": 14.927604922960693,
+    "error": 3.3630887939284353,
+    "confidence": 0.7631850437610533,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:49:24.266942",
+    "player": "Keldon Johnson",
+    "actual": 15.146067415730338,
+    "predicted": 17.381847570955564,
+    "error": 2.2357801552252266,
+    "confidence": 0.925212449813995,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-01T09:50:00.711254",
+    "player": "Draymond Green",
+    "actual": 8.221951219512196,
+    "predicted": 13.685395529869014,
+    "error": 5.463444310356818,
+    "confidence": 0.8916691617738899,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:44:11.201965",
+    "player": "Naz Reid",
+    "actual": 11.874476987447698,
+    "predicted": 13.958682861627528,
+    "error": 2.0842058741798297,
+    "confidence": 0.7659827130230374,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:45:06.264711",
+    "player": "Tobias Harris",
+    "actual": 16.477178423236513,
+    "predicted": 17.235418745227236,
+    "error": 0.7582403219907228,
+    "confidence": 0.7902702395692875,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-04-02T08:45:34.478038",
+    "player": "Daniss Jenkins",
+    "actual": 8.232876712328768,
+    "predicted": 22.744514859270154,
+    "error": 14.511638146941387,
+    "confidence": 0.9391791479267354,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:46:17.642957",
+    "player": "Ausar Thompson",
+    "actual": 9.592592592592593,
+    "predicted": 11.284531774499637,
+    "error": 1.6919391819070437,
+    "confidence": 0.7008007121132293,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:47:40.506171",
+    "player": "Luka Don\u010di\u0107",
+    "actual": 30.573696145124718,
+    "predicted": 37.75259713882432,
+    "error": 7.178900993699603,
+    "confidence": 0.8952887008576274,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:49:07.264752",
+    "player": "Luke Kennard",
+    "actual": 9.924242424242424,
+    "predicted": 7.426175128138494,
+    "error": 2.4980672961039296,
+    "confidence": 0.715155945349306,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:49:41.186855",
+    "player": "Austin Reaves",
+    "actual": 15.83030303030303,
+    "predicted": 23.116295261273496,
+    "error": 7.285992230970466,
+    "confidence": 0.8570931187752191,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:51:40.811427",
+    "player": "Jaylin Williams",
+    "actual": 5.721238938053097,
+    "predicted": 9.835755742203473,
+    "error": 4.114516804150376,
+    "confidence": 0.9423543666567571,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:52:36.226669",
+    "player": "James Harden",
+    "actual": 23.504424778761063,
+    "predicted": 21.629925610141015,
+    "error": 1.8744991686200478,
+    "confidence": 0.8885680734434993,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:53:13.943371",
+    "player": "Sam Merrill",
+    "actual": 7.954954954954955,
+    "predicted": 17.722694341629815,
+    "error": 9.76773938667486,
+    "confidence": 0.9668676751214118,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:53:45.380120",
+    "player": "Donovan Mitchell",
+    "actual": 26.073333333333334,
+    "predicted": 31.63645740430717,
+    "error": 5.563124070973835,
+    "confidence": 0.9918354755086206,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:54:44.938118",
+    "player": "Draymond Green",
+    "actual": 8.221951219512196,
+    "predicted": 13.683213279559904,
+    "error": 5.461262060047709,
+    "confidence": 0.9369701258036819,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:56:55.217397",
+    "player": "Kristaps Porzi\u0146\u0123is",
+    "actual": 20.443148688046648,
+    "predicted": 23.699878448333546,
+    "error": 3.2567297602868983,
+    "confidence": 0.8924373462138846,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T08:59:17.624027",
+    "player": "Toumani Camara",
+    "actual": 10.746666666666666,
+    "predicted": 18.23952974753538,
+    "error": 7.4928630808687124,
+    "confidence": 0.8651432990731732,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T09:00:42.551223",
+    "player": "Harrison Barnes",
+    "actual": 13.743785850860421,
+    "predicted": 9.571621559760642,
+    "error": 4.172164291099779,
+    "confidence": 0.8176880663136017,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T09:01:48.790885",
+    "player": "Dylan Harper",
+    "actual": 11.564516129032258,
+    "predicted": 14.92818502262384,
+    "error": 3.3636688935915817,
+    "confidence": 0.9043901655688565,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T09:02:11.676143",
+    "player": "Keldon Johnson",
+    "actual": 15.146067415730338,
+    "predicted": 17.384103894955416,
+    "error": 2.2380364792250784,
+    "confidence": 0.9252844779424608,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-02T09:04:51.682320",
+    "player": "Jordan Miller",
+    "actual": 6.959595959595959,
+    "predicted": 10.45550777647881,
+    "error": 3.49591181688285,
+    "confidence": 0.7180871599136915,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:15:29.345259",
+    "player": "Kobe Brown",
+    "actual": 3.237410071942446,
+    "predicted": 12.201996874139532,
+    "error": 8.964586802197086,
+    "confidence": 0.7421279629247386,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:16:29.760304",
+    "player": "Pascal Siakam",
+    "actual": 22.374207188160675,
+    "predicted": 35.34857386775794,
+    "error": 12.974366679597267,
+    "confidence": 0.9997648347193241,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:17:31.581542",
+    "player": "Moussa Diabat\u00e9",
+    "actual": 6.046511627906977,
+    "predicted": 13.28348150088745,
+    "error": 7.236969872980474,
+    "confidence": 0.9560885543122573,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:18:44.066776",
+    "player": "Moussa Diabat\u00e9",
+    "actual": 6.046511627906977,
+    "predicted": 13.28348150088745,
+    "error": 7.236969872980474,
+    "confidence": 0.9560885543122573,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:21:19.238226",
+    "player": "VJ Edgecombe",
+    "actual": 16.029411764705884,
+    "predicted": 30.03409917149773,
+    "error": 14.004687406791845,
+    "confidence": 0.999991055947279,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:22:02.813715",
+    "player": "Quentin Grimes",
+    "actual": 11.12540192926045,
+    "predicted": 23.48173041271259,
+    "error": 12.35632848345214,
+    "confidence": 0.9994049859565646,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T10:23:05.057997",
+    "player": "Kelly Oubre Jr.",
+    "actual": 16.20935960591133,
+    "predicted": 34.47087475872162,
+    "error": 18.26151515281029,
+    "confidence": 0.9999999999555479,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:35:16.697195",
+    "player": "Ben Saraf",
+    "actual": 6.717948717948718,
+    "predicted": 12.976828246619768,
+    "error": 6.2588795286710495,
+    "confidence": 0.847598137225132,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:36:00.145138",
+    "player": "Ziaire Williams",
+    "actual": 8.686567164179104,
+    "predicted": 13.672045669332517,
+    "error": 4.985478505153413,
+    "confidence": 0.7392645244560504,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:36:40.169367",
+    "player": "Matas Buzelis",
+    "actual": 12.324675324675324,
+    "predicted": 20.55780800912873,
+    "error": 8.233132684453407,
+    "confidence": 0.8844758181796906,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:38:01.359033",
+    "player": "OG Anunoby",
+    "actual": 15.619854721549636,
+    "predicted": 18.79144378207541,
+    "error": 3.1715890605257755,
+    "confidence": 0.8343428963370715,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:38:15.708987",
+    "player": "OG Anunoby",
+    "actual": 15.619854721549636,
+    "predicted": 18.79144378207541,
+    "error": 3.1715890605257755,
+    "confidence": 0.8343428963370715,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:40:42.088180",
+    "player": "Sandro Mamukelashvili",
+    "actual": 6.840909090909091,
+    "predicted": 18.18551005966418,
+    "error": 11.344600968755088,
+    "confidence": 0.975765281507948,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:41:44.954810",
+    "player": "Cedric Coward",
+    "actual": 13.344827586206897,
+    "predicted": 18.021512480156503,
+    "error": 4.676684893949606,
+    "confidence": 0.9089840914541651,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:43:14.217109",
+    "player": "Ace Bailey",
+    "actual": 13.537313432835822,
+    "predicted": 29.517014172979696,
+    "error": 15.979700740143874,
+    "confidence": 0.9994263613261962,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:43:59.319655",
+    "player": "Brice Sensabaugh",
+    "actual": 11.641618497109826,
+    "predicted": 26.59107377788401,
+    "error": 14.949455280774183,
+    "confidence": 0.9638941716588763,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:44:23.492614",
+    "player": "Cody Williams",
+    "actual": 6.54954954954955,
+    "predicted": 23.304682921087366,
+    "error": 16.755133371537816,
+    "confidence": 0.9980972730339605,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:46:34.383945",
+    "player": "Kevin Durant",
+    "actual": 27.44508670520231,
+    "predicted": 30.701776264086668,
+    "error": 3.256689558884357,
+    "confidence": 0.9664090539074814,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:47:31.454453",
+    "player": "Paolo Banchero",
+    "actual": 22.429657794676807,
+    "predicted": 32.08083652905131,
+    "error": 9.651178734374504,
+    "confidence": 0.9943395659778528,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:48:12.765731",
+    "player": "Jevon Carter",
+    "actual": 5.422434367541766,
+    "predicted": 12.682947036877396,
+    "error": 7.26051266933563,
+    "confidence": 0.9369603971586428,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:53:04.609367",
+    "player": "Precious Achiuwa",
+    "actual": 7.9147286821705425,
+    "predicted": 18.30025386978469,
+    "error": 10.385525187614148,
+    "confidence": 0.8689934086406916,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:53:42.677986",
+    "player": "Devin Carter",
+    "actual": 5.75,
+    "predicted": 17.031145528178914,
+    "error": 11.281145528178914,
+    "confidence": 0.9094487806719789,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-03T12:54:42.246387",
+    "player": "Maxime Raynaud",
+    "actual": 12.0,
+    "predicted": 19.024908122735884,
+    "error": 7.024908122735884,
+    "confidence": 0.9091480955208333,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T00:04:42.727168",
+    "player": "LeBron James",
+    "actual": 32.5,
+    "predicted": 31.2,
+    "error": 1.3000000000000007,
+    "confidence": 0.92,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-04-13T00:04:42.730961",
+    "player": "Luka Doncic",
+    "actual": 28.3,
+    "predicted": 30.1,
+    "error": 1.8000000000000007,
+    "confidence": 0.88,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T00:04:42.734864",
+    "player": "Giannis Antetokounmpo",
+    "actual": 26.1,
+    "predicted": 22.5,
+    "error": 3.6000000000000014,
+    "confidence": 0.85,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-13T00:04:42.738825",
+    "player": "Kevin Durant",
+    "actual": 25.7,
+    "predicted": 26.3,
+    "error": 0.6000000000000014,
+    "confidence": 0.9,
+    "is_accurate": true
+  },
+  {
+    "timestamp": "2026-04-13T00:04:42.742522",
+    "player": "Stephen Curry",
+    "actual": 24.5,
+    "predicted": 28.2,
+    "error": 3.6999999999999993,
+    "confidence": 0.87,
+    "is_accurate": false
   }
 ]
