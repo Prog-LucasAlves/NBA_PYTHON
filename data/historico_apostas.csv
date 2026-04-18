@@ -118,7 +118,17 @@ Data,Jogador,Time,Linha,Odd,Pts(Real),EV+%,Vitória%,Valor Aposta,Tipo,Resultado
 2026-04-15 17:04:33,Gary Payton II,GSW,6.5,1.89,6.0,75.24,92.72,R$ 100.00,Over,Red,R$ -100.00,False
 2026-04-15 17:05:57,Darius Garland,LAC,20.5,1.90,21.0,87.11,98.48,R$ 100.00,Over,Green,R$ 90.00,False
 2026-04-15 17:06:39,Bennedict Mathurin,LAC,11.5,1.83,23.0,80.41,98.58,R$ 100.00,Over,Green,R$ 83.00,False
-2026-04-17 18:56:54,Jamal Cain,ORL,3.5,1.76,,74.31,99.04,R$ 100.00,Over,-,-,False
-2026-04-17 18:57:49,Tristan da Silva,ORL,4.5,1.76,,48.29,84.26,R$ 100.00,Over,-,-,False
-2026-04-17 19:00:33,De'Anthony Melton,GSW,9.5,1.95,,93.87,99.42,R$ 100.00,Over,-,-,False
-2026-04-17 21:32:18,Gary Payton II,GSW,7.5,1.95,,71.34,87.87,R$ 100.00,Over,-,-,False
+2026-04-17 18:56:54,Jamal Cain,ORL,3.5,1.76,9.0,74.31,99.04,R$ 100.00,Over,Green,R$ 76.00,False
+2026-04-17 18:57:49,Tristan da Silva,ORL,4.5,1.76,5.0,48.29,84.26,R$ 100.00,Over,Green,R$ 76.00,False
+2026-04-17 19:00:33,De'Anthony Melton,GSW,9.5,1.95,16.0,93.87,99.42,R$ 100.00,Over,Green,R$ 95.00,False
+2026-04-17 21:32:18,Gary Payton II,GSW,7.5,1.95,4.0,71.34,87.87,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-18 11:21:21,Max Strus,CLE,7.5,1.86,,78.16,95.78,R$ 100.00,Over,-,-,False
+2026-04-18 11:24:19,Jaden McDaniels,MIN,14.5,1.76,,72.11,97.79,R$ 100.00,Over,-,-,False
+2026-04-18 11:24:52,Julius Randle,MIN,19.5,1.83,,60.48,87.69,R$ 100.00,Over,-,-,False
+2026-04-18 11:25:31,Christian Braun,DEN,11.5,1.90,,84.55,97.13,R$ 100.00,Over,-,-,False
+2026-04-18 11:26:48,Nikola Jokić,DEN,28.5,1.83,,81.74,99.31,R$ 100.00,Over,-,-,False
+2026-04-18 11:29:32,OG Anunoby,NYK,15.5,1.89,,79.67,95.06,R$ 100.00,Over,-,-,False
+2026-04-18 11:31:04,Mitchell Robinson,NYK,4.5,1.76,,65.31,93.92,R$ 100.00,Over,-,-,False
+2026-04-18 11:40:23,Jaxson Hayes,LAL,6.5,1.76,,75.53,99.73,R$ 100.00,Over,-,-,False
+2026-04-18 11:41:14,Luke Kennard,LAL,12.5,1.90,,84.68,97.20,R$ 100.00,Over,-,-,False
+2026-04-18 11:41:42,Jake LaRavia,LAL,7.5,1.86,,84.90,99.41,R$ 100.00,Over,-,-,False

@@ -1699,5 +1699,95 @@
     "error": 5.432763271276854,
     "confidence": 0.8786883515256718,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:21:21.103360",
+    "player": "Max Strus",
+    "actual": 10.414330218068535,
+    "predicted": 13.508508888903947,
+    "error": 3.0941786708354115,
+    "confidence": 0.9578473432370141,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:24:19.968622",
+    "player": "Jaden McDaniels",
+    "actual": 11.08883826879271,
+    "predicted": 21.505128172762085,
+    "error": 10.416289903969375,
+    "confidence": 0.9779195847516681,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:24:52.692490",
+    "player": "Julius Randle",
+    "actual": 21.757322175732217,
+    "predicted": 23.53682473024312,
+    "error": 1.779502554510902,
+    "confidence": 0.8769293106131324,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:25:31.984735",
+    "player": "Christian Braun",
+    "actual": 9.622775800711743,
+    "predicted": 18.114998607191623,
+    "error": 8.49222280647988,
+    "confidence": 0.9713147566992849,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:26:48.473204",
+    "player": "Nikola Joki\u0107",
+    "actual": 25.90239043824701,
+    "predicted": 37.075945943964356,
+    "error": 11.173555505717346,
+    "confidence": 0.9931273997219535,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:29:32.158271",
+    "player": "OG Anunoby",
+    "actual": 15.655502392344498,
+    "predicted": 21.246187186446278,
+    "error": 5.590684794101779,
+    "confidence": 0.9506173866727616,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:31:04.787818",
+    "player": "Mitchell Robinson",
+    "actual": 7.525679758308157,
+    "predicted": 9.889484580075358,
+    "error": 2.363804821767201,
+    "confidence": 0.9392357211902447,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:40:23.644842",
+    "player": "Jaxson Hayes",
+    "actual": 6.907621247113164,
+    "predicted": 16.200759517999423,
+    "error": 9.293138270886258,
+    "confidence": 0.9973401678170761,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:41:14.399044",
+    "player": "Luke Kennard",
+    "actual": 9.945273631840797,
+    "predicted": 19.152980542417232,
+    "error": 9.207706910576436,
+    "confidence": 0.97202273587184,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-18T11:41:42.463906",
+    "player": "Jake LaRavia",
+    "actual": 7.412844036697248,
+    "predicted": 16.26731930116645,
+    "error": 8.854475264469201,
+    "confidence": 0.9941128165165094,
+    "is_accurate": false
   }
 ]
