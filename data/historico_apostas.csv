@@ -106,8 +106,19 @@ Data,Jogador,Time,Linha,Odd,Pts(Real),EV+%,Vitória%,Valor Aposta,Tipo,Resultado
 2026-04-03 12:53:04,Precious Achiuwa,SAC,14.5,1.89,12.0,64.24,86.90,R$ 100.00,Over,Red,R$ -100.00,False
 2026-04-03 12:53:42,Devin Carter,SAC,12.5,1.80,9.0,63.70,90.94,R$ 100.00,Over,Red,R$ -100.00,False
 2026-04-03 12:54:42,Maxime Raynaud,SAC,14.5,2.00,28.0,81.83,90.91,R$ 100.00,Over,Green,R$ 100.00,False
-2026-04-13 16:34:34,Bam Adebayo,MIA,21.5,1.95,,94.77,99.88,R$ 100.00,Over,-,-,False
-2026-04-13 16:35:15,Tyler Herro,MIA,21.5,1.95,,68.06,86.19,R$ 100.00,Over,-,-,False
-2026-04-13 16:36:54,Pelle Larsson,MIA,9.5,1.83,,79.17,97.90,R$ 100.00,Over,-,-,False
-2026-04-13 16:37:49,Davion Mitchell,MIA,8.5,1.83,,78.83,97.72,R$ 100.00,Over,-,-,False
-2026-04-13 16:44:26,Jalen Green,PHX,18.5,1.90,,73.42,91.28,R$ 100.00,Over,-,-,False
+2026-04-13 16:34:34,Bam Adebayo,MIA,21.5,1.95,6.0,94.77,99.88,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-13 16:35:15,Tyler Herro,MIA,21.5,1.95,23.0,68.06,86.19,R$ 100.00,Over,Green,R$ 95.00,False
+2026-04-13 16:36:54,Pelle Larsson,MIA,9.5,1.83,6.0,79.17,97.90,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-13 16:37:49,Davion Mitchell,MIA,8.5,1.83,28.0,78.83,97.72,R$ 100.00,Over,Green,R$ 83.00,False
+2026-04-13 16:44:26,Jalen Green,PHX,18.5,1.90,35.0,73.42,91.28,R$ 100.00,Over,Green,R$ 90.00,False
+2026-04-15 16:59:56,Adem Bona,PHI,4.5,1.74,2.0,73.64,99.79,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-15 17:01:11,Quentin Grimes,PHI,10.5,1.74,4.0,73.95,99.97,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-15 17:02:07,Kelly Oubre Jr.,PHI,13.5,1.90,19.0,90.00,100.00,R$ 100.00,Over,Green,R$ 90.00,False
+2026-04-15 17:03:43,Draymond Green,GSW,7.5,2.00,7.0,69.74,84.87,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-15 17:04:33,Gary Payton II,GSW,6.5,1.89,6.0,75.24,92.72,R$ 100.00,Over,Red,R$ -100.00,False
+2026-04-15 17:05:57,Darius Garland,LAC,20.5,1.90,21.0,87.11,98.48,R$ 100.00,Over,Green,R$ 90.00,False
+2026-04-15 17:06:39,Bennedict Mathurin,LAC,11.5,1.83,23.0,80.41,98.58,R$ 100.00,Over,Green,R$ 83.00,False
+2026-04-17 18:56:54,Jamal Cain,ORL,3.5,1.76,,74.31,99.04,R$ 100.00,Over,-,-,False
+2026-04-17 18:57:49,Tristan da Silva,ORL,4.5,1.76,,48.29,84.26,R$ 100.00,Over,-,-,False
+2026-04-17 19:00:33,De'Anthony Melton,GSW,9.5,1.95,,93.87,99.42,R$ 100.00,Over,-,-,False
+2026-04-17 21:32:18,Gary Payton II,GSW,7.5,1.95,,71.34,87.87,R$ 100.00,Over,-,-,False
