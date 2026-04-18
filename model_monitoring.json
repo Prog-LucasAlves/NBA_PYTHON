@@ -1591,5 +1591,113 @@
     "error": 3.693046647898125,
     "confidence": 0.9127512688151211,
     "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T16:59:56.792528",
+    "player": "Adem Bona",
+    "actual": 4.857142857142857,
+    "predicted": 14.497897921340913,
+    "error": 9.640755064198057,
+    "confidence": 0.9979303764574308,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:01:11.981185",
+    "player": "Quentin Grimes",
+    "actual": 10.87431693989071,
+    "predicted": 22.58998119519635,
+    "error": 11.715664255305642,
+    "confidence": 0.9997371913612213,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:02:07.296002",
+    "player": "Kelly Oubre Jr.",
+    "actual": 16.68840579710145,
+    "predicted": 31.205449921406164,
+    "error": 14.517044124304714,
+    "confidence": 0.9999998091249577,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:03:43.198722",
+    "player": "Draymond Green",
+    "actual": 7.937062937062937,
+    "predicted": 11.094162304778877,
+    "error": 3.15709936771594,
+    "confidence": 0.848680082930241,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:04:33.465885",
+    "player": "Gary Payton II",
+    "actual": 6.141414141414141,
+    "predicted": 11.574177412690995,
+    "error": 5.432763271276854,
+    "confidence": 0.9272000052066915,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:05:57.487806",
+    "player": "Darius Garland",
+    "actual": 18.614583333333332,
+    "predicted": 28.04569558903328,
+    "error": 9.431112255699947,
+    "confidence": 0.9847705142811749,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-15T17:06:39.206597",
+    "player": "Bennedict Mathurin",
+    "actual": 17.39516129032258,
+    "predicted": 19.14522380772603,
+    "error": 1.7500625174034496,
+    "confidence": 0.985832410209949,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-17T18:56:54.775872",
+    "player": "Jamal Cain",
+    "actual": 4.795918367346939,
+    "predicted": 11.661661026098791,
+    "error": 6.865742658751852,
+    "confidence": 0.9903768589203334,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-17T18:57:49.021373",
+    "player": "Tristan da Silva",
+    "actual": 9.955882352941176,
+    "predicted": 8.004414789091074,
+    "error": 1.9514675638501018,
+    "confidence": 0.8425635438403745,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-17T19:00:33.905273",
+    "player": "De'Anthony Melton",
+    "actual": 10.016447368421053,
+    "predicted": 18.30146524551949,
+    "error": 8.285017877098438,
+    "confidence": 0.9942022154030083,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-17T19:01:00.913278",
+    "player": "Gary Payton II",
+    "actual": 6.141414141414141,
+    "predicted": 11.574177412690995,
+    "error": 5.432763271276854,
+    "confidence": 0.8786883515256718,
+    "is_accurate": false
+  },
+  {
+    "timestamp": "2026-04-17T21:32:18.663109",
+    "player": "Gary Payton II",
+    "actual": 6.141414141414141,
+    "predicted": 11.574177412690995,
+    "error": 5.432763271276854,
+    "confidence": 0.8786883515256718,
+    "is_accurate": false
   }
 ]
