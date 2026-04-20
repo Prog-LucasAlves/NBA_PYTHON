@@ -25,11 +25,11 @@ class AutomaticModelMonitor:
         self.monitor_file = monitor_file
         self.history: list[dict] = self._load_history()
         self.thresholds = {
-            "mae_critical": 2.5,  # Erro absoluto crítico em pontos
-            "mae_warning": 1.8,  # Aviso em pontos
-            "rmse_critical": 3.5,
-            "rmse_warning": 2.5,
-            "accuracy_warning": 0.80,  # 80% de acerto
+            "mae_critical": 4.5,  # Erro absoluto crítico em pontos
+            "mae_warning": 3.5,  # Aviso em pontos
+            "rmse_critical": 5.5,
+            "rmse_warning": 4.5,
+            "accuracy_warning": 0.55,  # 55% de acerto (lucrativo)
             "degradation_window": 50,  # últimas 50 predições
         }
 

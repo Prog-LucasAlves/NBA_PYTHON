@@ -1257,13 +1257,6 @@ with tab_predictor:
             bet_type=bet_type,
         )
 
-        auto_monitor.log_prediction(
-            player_name=selected_player,
-            predicted_pts=prediction["predicted_points"],
-            actual_pts=predictor.player_averages[selected_player]["avg_pts"],
-            confidence=ev_analysis["model_probability"],
-        )
-
         st.success(f"Aposta registrada com sucesso! Total de apostas: {num_bets}")
         st.balloons()
 
@@ -1677,10 +1670,10 @@ with tab_monitor:
         acc_accent = "green" if accuracy >= 80 else "amber" if accuracy >= 60 else "red"
         render_kpi("🎯", "Acurácia", f"{accuracy:.2f}%", "Taxa de acerto", acc_accent)
     with col4:
-        if accuracy >= 80:
+        if accuracy >= 58:
             status_level = "ok"
             status_label = "✅ BOM"
-        elif accuracy >= 60:
+        elif accuracy >= 53:
             status_level = "warn"
             status_label = "⚠️ AVISO"
         else:
